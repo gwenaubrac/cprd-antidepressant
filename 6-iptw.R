@@ -3,7 +3,6 @@
 ## Program: 6. IPTW weights
 ##
 ## Purpose: Calculate inverse probability of treatment weights.
-## Only two treatments can be compared, so it is important to define the reference exposure group.
 ##
 ## Author: Gwen Aubrac
 ##
@@ -11,8 +10,10 @@
 ##
 ## ---------------------------
 ##
-## Notes: Different models can be specified and tested for IPTW to achieve balance.
-## 
+## Notes: Different models can be specified and tested for IPTW to achieve balance. Here, an interaction term was added
+## between baseline depression and age group.
+## Hypomagnesemia, hypocalcemia, and acute renal disease were removed from the IPTW due to positivity assumption violation
+## (too few counts resulting in no contrast in some bootstrap samples)
 ##
 ## ---------------------------
 
@@ -20,7 +21,7 @@
 # male, female, young, old, 2019, 2020, 2021, 2022
 # depressed, not_depressed
 
-analysis <- ''
+analysis <- '2022'
 
 #### LOAD PACKAGES ####
 
@@ -95,19 +96,17 @@ comorbidities <- readRDS(file = paste(path_main, 'comorbidities.rds', sep = '/')
 base_comorb <- readRDS(file = paste(path_main, 'base_comorb.rds', sep = '/'))
 dec_comorb <- readRDS(file = paste(path_main, 'dec_comorb.rds', sep = '/'))
 
-comorbidities <- comorbidities[!comorbidities %in% c('hypocalcemia', 'hypomagnesemia')]
-base_comorb <- base_comorb[!base_comorb %in% c('hypocalcemia_base', 'hypomagnesemia_base')]
-dec_comorb <- dec_comorb[!dec_comorb %in% c('hypocalcemia_d1', 'hypomagnesemia_d1',
-                  'hypocalcemia_d2', 'hypomagnesemia_d2',
-                  'hypocalcemia_d3', 'hypomagnesemia_d3',
-                  'hypocalcemia_d4', 'hypomagnesemia_d4',
-                  'hypocalcemia_d5', 'hypomagnesemia_d5',
-                  'hypocalcemia_d6', 'hypomagnesemia_d6',
-                  'hypocalcemia_d7', 'hypomagnesemia_d7',
-                  'hypocalcemia_d8', 'hypomagnesemia_d8',
-                  'hypocalcemia_d9', 'hypomagnesemia_d9')]
-
-#cohort %<>% mutate(trt_dummy = as.factor(trt_dummy), trt = as.factor(trt))
+comorbidities <- comorbidities[!comorbidities %in% c('hypocalcemia', 'hypomagnesemia', 'acute_renal_disease')]
+base_comorb <- base_comorb[!base_comorb %in% c('hypocalcemia_base', 'hypomagnesemia_base', 'acute_renal_disease_base')]
+dec_comorb <- dec_comorb[!dec_comorb %in% c('hypocalcemia_d1', 'hypomagnesemia_d1', 'acute_renal_disease_d1',
+                  'hypocalcemia_d2', 'hypomagnesemia_d2', 'acute_renal_disease_d1',
+                  'hypocalcemia_d3', 'hypomagnesemia_d3', 'acute_renal_disease_d3',
+                  'hypocalcemia_d4', 'hypomagnesemia_d4', 'acute_renal_disease_d4',
+                  'hypocalcemia_d5', 'hypomagnesemia_d5', 'acute_renal_disease_d5',
+                  'hypocalcemia_d6', 'hypomagnesemia_d6', 'acute_renal_disease_d6',
+                  'hypocalcemia_d7', 'hypomagnesemia_d7', 'acute_renal_disease_d7',
+                  'hypocalcemia_d8', 'hypomagnesemia_d8', 'acute_renal_disease_d8',
+                  'hypocalcemia_d9', 'hypomagnesemia_d9', 'acute_renal_disease_d9')]
 
 base_variables <- c(covariates, base_comorb)
 
@@ -117,33 +116,13 @@ if (analysis == 'male' | analysis == 'female') {
   base_variables <- base_variables[!base_variables %in% c('year', 'month_year')]
 } else if (analysis == 'depressed' | analysis == 'not_depressed') {
   base_variables <- base_variables[!base_variables %in% c('depression_base')]
+} else if (analysis == 'young' | analysis == 'old') {
+  cohort$age_group <- droplevels(cohort$age_group)
 }
 
 summary(cohort[base_variables])
 
 cat(paste('Covariates included are:', base_variables, '\n'), file = iptw_desc, append = TRUE)
-
-# check for patients with missing covariate info
-length(which(is.na(cohort$sex)))
-cat(paste('Patients missing sex (removed from analyses):', length(which(is.na(cohort$sex))), '\n'), file = iptw_desc, append = TRUE)
-
-cohort <- cohort %>%
-  filter (!is.na(sex))
-
-
-length(which(is.na(cohort$ethnicity)))
-cat(paste('Patients missing ethnicity (recategorized as unknown):', length(which(is.na(cohort$ethnicity))), '\n'), file = iptw_desc, append = TRUE)
-
-cohort <- cohort %>%
-  mutate (ethnicity = as.factor(if_else(is.na(ethnicity), 'Unknown', ethnicity)))
-summary(cohort$ethnicity)
-
-length(which(is.na(cohort$deprivation)))
-cat(paste('Patients missing deprivation (recategorized as unknown):', length(which(is.na(cohort$deprivation))), '\n'), file = iptw_desc, append = TRUE)
-
-cohort <- cohort %>%
-  mutate (deprivation = as.factor(if_else(is.na(deprivation), 'Unknown', deprivation)))
-summary(cohort$deprivation)
 
 covs <- subset(cohort, select = base_variables)
 saveRDS(covs, file = paste(path_cohort, 'iptw_covs.rds', sep ='/')) # for plots later
@@ -156,6 +135,11 @@ base_model <- reformulate(base_variables, 'trt_dummy')
 inter_model <- as.formula(paste('trt_dummy', "~", paste(c(base_variables, 'age_group*depression_base'), collapse = " + ")))
 
 model <- inter_model
+
+if (analysis == 'depressed' | analysis == 'not_depressed') {
+  model <- base_model
+}
+
 saveRDS(model, file = paste(path_results, 'iptw_model.rds', sep = '/')) # for later
 model
 

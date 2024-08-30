@@ -32,7 +32,7 @@
 
 # analysis: main, flex_grace_period, or 90_day_grace_period
 
-analysis <- ''
+analysis <- 'flex_grace_period'
 
 #### LOAD PACKAGES ####
 
@@ -49,12 +49,13 @@ library(data.table)
 
 if (analysis == 'main' | analysis == '') {
   path_cohort <- "Z:/EPI/Protocol 24_004042/Gwen/data/cohort/main" 
-} else if (analyses == 'flex_grace_period') {
+} else if (analysis == 'flex_grace_period') {
   path_cohort <- "Z:/EPI/Protocol 24_004042/Gwen/data/cohort/sensitivity/flex_grace_period" 
-} else if (analyses == '90_day_grace_period') {
+} else if (analysis == '90_day_grace_period') {
   path_cohort <- "Z:/EPI/Protocol 24_004042/Gwen/data/cohort/sensitivity/90_day_grace_period" 
 } 
 
+path_main <- "Z:/EPI/Protocol 24_004042/Gwen/data/cohort/main" 
 path_cprdA <- "Z:/EPI/Protocol 24_004042/dataA" 
 path_cprdB <- "Z:/EPI/Protocol 24_004042/dataB" 
 path_cprdC <- "Z:/EPI/Protocol 24_004042/dataC (no followup)"
@@ -161,13 +162,30 @@ quantile(censoring_times, probs = seq(0, 1, by = 0.05))
 cat(paste('The distribution of censoring times is:', quantile(censoring_times, probs = seq(0, 1, by = 0.05)), '\n'), file = cov_desc, append = TRUE)
 
 # there is a concentration of censoring at 58 days (d1 = d2 = d3)
-# so let us create deciles starting from the 3rd decile
+# so let us split data into deciles starting from the 3rd decile (~35%)
 # to be more flexible
-
 breaks <- round(seq(from = 0.35, to = 1, length.out = 10), 2)
 breaks
 times_dec <- quantile(censoring_times, probs = breaks)
 times_dec
+
+length(which(censoring_times < times_dec[[1]]))
+length(which(censoring_times >= times_dec[[1]] & censoring_times < times_dec[[2]]))
+length(which(censoring_times == times_dec[[1]]))
+
+# let us shift the concentration of censoring to the first decile
+# by setting the second decile at 59 days (for main)
+times_dec[[1]] <- 59
+times_dec
+
+# # and 119 days (for 90-day grace)
+# times_dec[[1]] <- 119
+# times_dec
+# 
+# # and 57 days (for flexible grace)
+# times_dec[[1]] <- 57
+# times_dec
+
 saveRDS(times_dec, file = paste(path_cohort, 'times_dec.RDS', sep = '/'))
 
 cat('The deciles of censoring distribution are:', paste(times_dec, sep = ','))
@@ -289,13 +307,13 @@ saveRDS(cohort_comorb_cprd, file = paste(path_cohort, 'cprd_comorb_C.rds', sep='
 
 rm(cohort_comorb_cprd)
 
-cprd_comorb_A1 <- readRDS(file = paste(path_cohort, 'cprd_comorb_A1.rds', sep = '/'))
-cprd_comorb_A2 <- readRDS(file = paste(path_cohort, 'cprd_comorb_A2.rds', sep = '/'))
-cprd_comorb_A3 <- readRDS(file = paste(path_cohort, 'cprd_comorb_A3.rds', sep = '/'))
-cprd_comorb_B1 <- readRDS(file = paste(path_cohort, 'cprd_comorb_B1.rds', sep = '/'))
-cprd_comorb_B2 <- readRDS(file = paste(path_cohort, 'cprd_comorb_B2.rds', sep = '/'))
-cprd_comorb_B3 <- readRDS(file = paste(path_cohort, 'cprd_comorb_B3.rds', sep = '/'))
-cprd_comorb_C <- readRDS(file = paste(path_cohort, 'cprd_comorb_C.rds', sep = '/'))
+cprd_comorb_A1 <- readRDS(file = paste(path_main, 'cprd_comorb_A1.rds', sep = '/'))
+cprd_comorb_A2 <- readRDS(file = paste(path_main, 'cprd_comorb_A2.rds', sep = '/'))
+cprd_comorb_A3 <- readRDS(file = paste(path_main, 'cprd_comorb_A3.rds', sep = '/'))
+cprd_comorb_B1 <- readRDS(file = paste(path_main, 'cprd_comorb_B1.rds', sep = '/'))
+cprd_comorb_B2 <- readRDS(file = paste(path_main, 'cprd_comorb_B2.rds', sep = '/'))
+cprd_comorb_B3 <- readRDS(file = paste(path_main, 'cprd_comorb_B3.rds', sep = '/'))
+cprd_comorb_C <- readRDS(file = paste(path_main, 'cprd_comorb_C.rds', sep = '/'))
 
 cohort_comorb_cprd <- rbind(cprd_comorb_A1, cprd_comorb_A2, cprd_comorb_A3, cprd_comorb_B1, cprd_comorb_B2, cprd_comorb_B3, cprd_comorb_C)
 cohort_comorb_cprd <- merge(cohort_comorb_cprd, comorb_cprd, by.x = 'medical_code', by.y = 'MedCodeId')
@@ -358,13 +376,6 @@ cohort_comorb_hes_epi <- hes_dx_epi %>%
       paste(ICD, ICDx, sep=''), ICD),
     icd_code_length = nchar(ICD)
     ) 
-
-# test <- cohort_comorb_hes_epi %>% 
-#   filter(id %in% cohort_ids) %>% 
-#   mutate (flag1 = if_else((icd_code_length == 3 & ICD %in% comorb_hes_three$ICD10Code), 1, 0))
-# 
-# test <- merge(test, comorb_hes, by.x = 'ICD', by.y = 'ICD10Code', all.x = TRUE)
-# test %<>% arrange(desc(flag1))
 
 cohort_comorb_hes_epi <- cohort_comorb_hes_epi %>% 
   filter(id %in% cohort_ids &
@@ -470,13 +481,13 @@ for (i in 2:ncol(first_comorb)) {
 
 rm(first_comorb, comorb_name, first_comorb_i, comorb_cprd, comorb_hes, cohort_comorb_cprd, cohort_comorb_hes_epi, cohort_comorb_hes_hosp, cohort_ids)
 
-#### FORMAT DATA ####
+#### FORMAT COVARIATE DATA ####
 
-#trt_dummy = 0 (reference exposure group) and trt_dummy = 1 (comparator exposure group)
+#trt_dummy = 0 (reference exposure group, here SNRI) and trt_dummy = 1 (comparator exposure group, here SSRI)
 cohort$trt_dummy <- if_else (cohort$trt == 'ssri', 1, 0)
 cohort %<>% mutate(trt_dummy = as.factor(trt_dummy), trt = as.factor(trt))
 
-# create vectors with names for all user-specified covariates and comorbidities in path
+# create vectors with names for all user-specified covariates and comorbidities
 covariates <- c('age_group', 'sex', 'year', 'ethnicity', 'deprivation') 
 cat(paste('The baseline covariates are:', covariates, '\n'), file = cov_desc, append = TRUE)
 
@@ -509,16 +520,39 @@ names <- c('sex', 'year', 'ethnicity', 'deprivation', base_comorb, dec_comorb, '
 cohort <- cohort %>% 
   mutate(across(names, as.factor)) 
 
+# remove empty factor levels
 cohort$deprivation <- droplevels(cohort$deprivation)
 cohort$ethnicity <- droplevels(cohort$ethnicity)
 
-# change baseline depression to d1 depression
+# depression tends to be undercoded in EHR data
+# so to have more representative baseline depression
+# let us change baseline depression to d1 depression
 table(cohort$depression_base, cohort$trt)
 table(cohort$depression_d1, cohort$trt)
 
 cohort <- cohort %>% 
   mutate(depression_base = depression_d1) 
 
-saveRDS(cohort, file = paste(path_cohort, 'antidepressant_cohort_covariates.rds', sep='/'))
+# check for patients with missing covariate info
+length(which(is.na(cohort$sex)))
+cat(paste('Patients missing sex (removed from analyses):', length(which(is.na(cohort$sex))), '\n'), file = cov_desc, append = TRUE)
 
+cohort <- cohort %>%
+  filter (!is.na(sex))
+
+length(which(is.na(cohort$ethnicity)))
+cat(paste('Patients missing ethnicity (recategorized as unknown):', length(which(is.na(cohort$ethnicity))), '\n'), file = cov_desc, append = TRUE)
+
+cohort <- cohort %>%
+  mutate (ethnicity = as.factor(if_else(is.na(ethnicity), 'Unknown', ethnicity)))
+summary(cohort$ethnicity)
+
+length(which(is.na(cohort$deprivation)))
+cat(paste('Patients missing deprivation (recategorized as unknown):', length(which(is.na(cohort$deprivation))), '\n'), file = cov_desc, append = TRUE)
+
+cohort <- cohort %>%
+  mutate (deprivation = as.factor(if_else(is.na(deprivation), 'Unknown', deprivation)))
+summary(cohort$deprivation)
+
+saveRDS(cohort, file = paste(path_cohort, 'antidepressant_cohort_covariates.rds', sep='/'))
 

@@ -82,7 +82,7 @@ cohort <- readRDS(file = paste(path_cohort, 'antidepressant_cohort_iptw.rds', se
 covariates <- readRDS(file = paste(path_main, 'covariates.rds', sep = '/'))
 comorbidities <- readRDS(file = paste(path_main, 'comorbidities.rds', sep = '/'))
 base_comorb <- readRDS(file = paste(path_main, 'base_comorb.rds', sep = '/'))
-quart_comorb <- readRDS(file = paste(path_main, 'quart_comorb.rds', sep = '/'))
+dec_comorb <- readRDS(file = paste(path_main, 'dec_comorb.rds', sep = '/'))
 
 itt_person_time <- readRDS(file = paste(path_cohort, 'itt_person_time.rds', sep = '/'))
 itt_events <- readRDS(file = paste(path_cohort, 'itt_events.rds', sep = '/'))
@@ -94,6 +94,63 @@ cohort_vis <- merge(cohort, itt_person_time, by.x = 'id', by.y = 'id', all.x = T
 cohort_vis <- merge(cohort_vis, at_person_time, by.x= 'id', by.y = 'id', all.x = TRUE)
 
 cohort_vis$region <- 'CPRD'
+
+#### GET PERSON-TIME ####
+
+itt_person_time <- cohort_analytic_itt %>% 
+  mutate(itt_pt = sum(person_time),
+         itt_pt_iptw = sum(iptw_person_time),
+         itt_pt_siptw = sum(siptw_person_time)) %>% 
+  select(id, itt_pt, itt_pt_iptw, itt_pt_siptw) 
+
+saveRDS(itt_person_time, file = paste(path_cohort, 'itt_person_time.rds', sep = '/'))
+
+itt_events <- cohort_analytic_itt %>% 
+  mutate(total_events = sum(itt_event),
+         total_events_siptw = sum(siptw_event)) %>% 
+  select(year, total_events, total_events_siptw) 
+
+saveRDS(itt_events, file = paste(path_cohort, 'itt_events.rds', sep = '/'))
+
+cohort_analytic_at <- readRDS(file = paste(path_main, 'cohort_analytic_at.rds', sep = '/'))
+
+at_person_time <- cohort_analytic_at %>% 
+  group_by(id) %>%
+  mutate(
+    at_pt = sum(person_time),
+    at_pt_siptw_sipcw_lag = sum(siptw_sipcw_lag_person_time),
+    at_pt_siptw_sipcw_nonlag = sum(siptw_sipcw_nonlag_person_time),
+    at_pt_siptw_sipcw_pool = sum(siptw_sipcw_pool_person_time)
+  ) %>%
+  select(
+    id,
+    at_pt,
+    at_pt_siptw_sipcw_lag,
+    at_pt_siptw_sipcw_nonlag,
+    at_pt_siptw_sipcw_pool
+  ) %>%
+  slice(1)
+
+saveRDS(at_person_time, file = paste(path_cohort, 'at_person_time.rds', sep = '/'))
+
+at_events <- cohort_analytic_at %>% 
+  group_by(year) %>%
+  mutate(
+    total_events = sum(event_at_tstop),
+    total_events_siptw_sipcw_lag = sum(siptw_sipcw_lag_event),
+    total_events_siptw_sipcw_nonlag = sum(siptw_sipcw_nonlag_event),
+    total_events_siptw_sipcw_pool = sum(siptw_sipcw_pool_event),
+  ) %>%
+  select(
+    year,
+    total_events,
+    total_events_siptw_sipcw_lag,
+    total_events_siptw_sipcw_nonlag,
+    total_events_siptw_sipcw_pool
+  ) %>% 
+  slice(1)
+
+saveRDS(at_events, file = paste(path_cohort, 'at_events.rds', sep = '/'))
 
 #### All X BY YEAR ####
 
@@ -127,39 +184,32 @@ allybyyear <- cohort_vis %>%
   summarize (
     itt_num_events = sum(itt_event),
     itt_person_days = sum(itt_pt),
-    itt_person_years = itt_person_days / 365,
-    itt_IR_p100y = itt_num_events/itt_person_years * 100,
+    itt_person_years = itt_person_days/365,
+    itt_IR_p100y = itt_num_events/itt_person_years*100,
     at_num_events = sum(at_event),
     at_person_days = sum(at_pt),
-    at_person_years = at_person_days / 365,
-    at_IR_p100y = at_num_events/at_person_years * 100
+    at_person_years = at_person_days/365,
+    at_IR_p100y = at_num_events/at_person_years*100
   )
 
 allybyyear <- cbind(region = 'CPRD', allybyyear, row.names = NULL)
 
 saveRDS(allybyyear, file = paste(path_vis, 'allybyyear.xlsx', sep = '/'))
 
-# read all excel with IR for at
-test <- read_excel(paste(path_results,'at_ir_ipcw_iptw_time.xlsx', sep = '/')) %>% 
-  mutate(at_IR_iptw_ipcwlagged = 100*IR,
-         at_IR_siptw_sipcwlagged = 100*IR_stab) %>% 
-  select(month_year, at_IR_iptw_ipcwlagged, at_IR_siptw_sipcwlagged)
+#### ALL Y BY MONTH ####
 
 allybymonth <- cohort_vis %>% 
   group_by(month_year) %>% 
   summarize (
     itt_num_events = sum(itt_event),
     itt_person_days = sum(itt_pt),
-    itt_person_years = itt_person_days / 365,
-    itt_IR_p100y = itt_num_events/itt_person_years * 100,
+    itt_person_years = itt_person_days/365,
+    itt_IR_p100y = itt_num_events/itt_person_years*100,
     at_num_events = sum(at_event),
     at_person_days = sum(at_pt),
-    at_person_years = at_person_days / 365,
-    at_IR_p100y = at_num_events/at_person_years * 100
+    at_person_years = at_person_days/365,
+    at_IR_p100y = at_num_events/at_person_years*100
   )
-
-# merge with results
-allybymonth <- merge(allybymonth, test, by = 'month_year', all.x = TRUE)
 
 saveRDS(allybymonth, file = paste(path_vis, 'allybymonth.xlsx', sep = '/'))
 
@@ -179,8 +229,6 @@ saveRDS(covscoef, file = paste(path_vis, 'covsbyreg.xlsx', sep = '/'))
 
 base_variables <- c(covariates, base_comorb) 
 grouping_var <- 'region' 
-base_variables <- base_variables[!base_variables %in% c('year', 'month_year', 'age_at_entry')]
-base_variables <- c(base_variables, 'age_group')
 
 trt_col_name <- 'trt_dummy'
 
@@ -243,179 +291,167 @@ covscoef <- cbind(region = 'CPRD', covscoef, row.names = NULL)
 
 saveRDS(covscoef, file = paste(path_vis, 'covscoef.xlsx', sep = '/'))
 
-#### MODEL RESULTS ####
+#### COX MODEL RESULTS ####
 
 # stabilized weights
-
-itt_model <- readRDS(paste(path_results, 'cox_no_weight.rds', sep = '/'))
-itt_siptw_model <- readRDS(paste(path_results, 'cox_siptw.rds', sep = '/'))
-at_model <- readRDS(paste(path_results, 'cox_at.rds', sep = '/'))
-at_siptw_model <- readRDS(paste(path_results, 'cox_at_siptw.rds', sep = '/'))
-at_sipcw_model <- readRDS(paste(path_results, 'cox_stab_lagged.rds', sep = '/'))
-at_siptw_sipcw_model <- readRDS(paste(path_results, 'cox_stab_lagged_iptw.rds', sep = '/'))
-at_sipcw_nl_model <- readRDS(paste(path_results, 'cox_nl_stab.rds', sep = '/'))
-at_sipcw_nl_siptw_model <- readRDS(paste(path_results, 'cox_nl_stab_iptw.rds', sep = '/'))
-at_sipcw_pooled_model <- readRDS(paste(path_results, 'cox_pooled_stab.rds', sep = '/'))
-at_sipcw_pooled_siptw_model <- readRDS(paste(path_results, 'cox_pooled_stab_iptw.rds', sep = '/'))
-at_sipcw_nl_mod_model <- readRDS(paste(path_results, 'cox_nl_mod_stab.rds', sep = '/'))
-at_sipcw_nl_mod_siptw_model <- readRDS(paste(path_results, 'cox_nl_mod_stab_iptw.rds', sep = '/'))
-
-result_chart_stab <- data.frame(matrix(nrow = 12, ncol = 3))
-colnames(result_chart_stab) <- c('estimate', 'lower_ci', 'upper_ci')
-rownames(result_chart_stab) <- c('ITT', 'ITT (sIPTW)', 'AT', 'AT (sIPTW)', 'AT (lagged sIPCW)', 'AT (lagged sIPCW + sIPTW)',
-                            'AT (non-lagged sIPCW)', 'AT (non-lagged sIPCW + sIPTW)', 'AT (pooled sIPCW)',
-                            'AT (pooled sIPCW + sIPTW)', 'AT (mod non-lagged sIPCW)', 'AT (mod non-lagged sIPCW + sIPTW)')
-
-result_chart_stab[1, 'estimate'] <- exp(itt_model$coef)
-result_chart_stab[1, 'lower_ci'] <- exp(confint(itt_model))[1]
-result_chart_stab[1, 'upper_ci'] <- exp(confint(itt_model))[2]
-
-result_chart_stab[2, 'estimate'] <- exp(itt_siptw_model$coef)
-result_chart_stab[2, 'lower_ci'] <- exp(confint(itt_siptw_model))[1]
-result_chart_stab[2, 'upper_ci'] <- exp(confint(itt_siptw_model))[2]
-
-result_chart_stab[3, 'estimate'] <- exp(at_model$coef)
-result_chart_stab[3, 'lower_ci'] <- exp(confint(at_model))[1]
-result_chart_stab[3, 'upper_ci'] <- exp(confint(at_model))[2]
-
-result_chart_stab[4, 'estimate'] <- exp(at_siptw_model$coef)
-result_chart_stab[4, 'lower_ci'] <- exp(confint(at_siptw_model))[1]
-result_chart_stab[4, 'upper_ci'] <- exp(confint(at_siptw_model))[2]
-
-result_chart_stab[5, 'estimate'] <- exp(at_sipcw_model$coef)
-result_chart_stab[5, 'lower_ci'] <- exp(confint(at_sipcw_model))[1]
-result_chart_stab[5, 'upper_ci'] <- exp(confint(at_sipcw_model))[2]
-
-result_chart_stab[6, 'estimate'] <- exp(at_siptw_sipcw_model$coef)
-result_chart_stab[6, 'lower_ci'] <- exp(confint(at_siptw_sipcw_model))[1]
-result_chart_stab[6, 'upper_ci'] <- exp(confint(at_siptw_sipcw_model))[2]
-
-result_chart_stab[7, 'estimate'] <- exp(at_sipcw_nl_model$coef)
-result_chart_stab[7, 'lower_ci'] <- exp(confint(at_sipcw_nl_model))[1]
-result_chart_stab[7, 'upper_ci'] <- exp(confint(at_sipcw_nl_model))[2]
-
-result_chart_stab[8, 'estimate'] <- exp(at_sipcw_nl_siptw_model$coef)
-result_chart_stab[8, 'lower_ci'] <- exp(confint(at_sipcw_nl_siptw_model))[1]
-result_chart_stab[8, 'upper_ci'] <- exp(confint(at_sipcw_nl_siptw_model))[2]
-
-result_chart_stab[9, 'estimate'] <- exp(at_sipcw_pooled_model$coef)
-result_chart_stab[9, 'lower_ci'] <- exp(confint(at_sipcw_pooled_model))[1]
-result_chart_stab[9, 'upper_ci'] <- exp(confint(at_sipcw_pooled_model))[2]
-
-result_chart_stab[10, 'estimate'] <- exp(at_sipcw_pooled_siptw_model$coef)
-result_chart_stab[10, 'lower_ci'] <- exp(confint(at_sipcw_pooled_siptw_model))[1]
-result_chart_stab[10, 'upper_ci'] <- exp(confint(at_sipcw_pooled_siptw_model))[2]
-
-result_chart_stab[11, 'estimate'] <- exp(at_sipcw_nl_mod_model$coef)
-result_chart_stab[11, 'lower_ci'] <- exp(confint(at_sipcw_nl_mod_model))[1]
-result_chart_stab[11, 'upper_ci'] <- exp(confint(at_sipcw_nl_mod_model))[2]
-
-result_chart_stab[12, 'estimate'] <- exp(at_sipcw_nl_mod_siptw_model$coef)
-result_chart_stab[12, 'lower_ci'] <- exp(confint(at_sipcw_nl_mod_siptw_model))[1]
-result_chart_stab[12, 'upper_ci'] <- exp(confint(at_sipcw_nl_mod_siptw_model))[2]
-
-result_chart_stab <- cbind(model = row.names(result_chart_stab), result_chart_stab, row.names = NULL)
-write_xlsx(result_chart_stab, paste(path_results, 'result_chart_stab.xlsx', sep ='/'))
-
-#summary_cox_results <- result_chart_stab[c(2,4,6,8,10),]
-summary_cox_results <- result_chart_stab[c(2,4,6,8,10,12),]
-summary_cox_results$model <- factor(summary_cox_results$model, levels = rev(summary_cox_results$model))
-
-setwd(path_results)
-
-# non-stabilized weights
-
-itt_model <- readRDS(paste(path_results, 'cox_no_weight.rds', sep = '/'))
-itt_siptw_model <- readRDS(paste(path_results, 'cox_siptw.rds', sep = '/'))
-at_model <- readRDS(paste(path_results, 'cox_at.rds', sep = '/'))
-at_siptw_model <- readRDS(paste(path_results, 'cox_at_siptw.rds', sep = '/'))
-at_ipcw_model <- readRDS(paste(path_results, 'cox_lagged.rds', sep = '/'))
-at_iptw_ipcw_model <- readRDS(paste(path_results, 'cox_lagged_iptw.rds', sep = '/'))
-at_ipcw_nl_model <- readRDS(paste(path_results, 'cox_nl.rds', sep = '/'))
-at_ipcw_nl_iptw_model <- readRDS(paste(path_results, 'cox_nl_iptw.rds', sep = '/'))
-at_ipcw_pooled_model <- readRDS(paste(path_results, 'cox_pooled.rds', sep = '/'))
-at_ipcw_pooled_iptw_model <- readRDS(paste(path_results, 'cox_pooled_iptw.rds', sep = '/'))
-at_ipcw_nl_mod_model <- readRDS(paste(path_results, 'cox_nl_mod.rds', sep = '/'))
-at_ipcw_nl_mod_iptw_model <- readRDS(paste(path_results, 'cox_nl_mod_iptw.rds', sep = '/'))
+cox_itt <- readRDS(paste(path_results, 'cox_itt.rds', sep = '/'))
+cox_itt_siptw <- readRDS(paste(path_results, 'cox_itt_siptw.rds', sep = '/'))
+cox_at <- readRDS(paste(path_results, 'cox_at.rds', sep = '/'))
+cox_at_siptw <- readRDS(paste(path_results, 'cox_at_siptw.rds', sep = '/'))
+cox_at_sipcw_lag <- readRDS(paste(path_results, 'cox_at_sipcw_lag.rds', sep = '/'))
+cox_at_siptw_sipcw_lag <- readRDS(paste(path_results, 'cox_at_siptw_sipcw_lag.rds', sep = '/'))
+cox_at_sipcw_nonlag <- readRDS(paste(path_results, 'cox_at_sipcw_nonlag.rds', sep = '/'))
+cox_at_siptw_sipcw_nonlag <- readRDS(paste(path_results, 'cox_at_siptw_sipcw_nonlag.rds', sep = '/'))
+cox_at_sipcw_pool <- readRDS(paste(path_results, 'cox_at_sipcw_pool.rds', sep = '/'))
+cox_at_siptw_sipcw_pool <- readRDS(paste(path_results, 'cox_at_siptw_sipcw_pool.rds', sep = '/'))
+cox_at_sipcw_mod <- readRDS(paste(path_results, 'cox_at_sipcw_mod.rds', sep = '/'))
+cox_at_siptw_sipcw_mod <- readRDS(paste(path_results, 'cox_at_siptw_sipcw_mod.rds', sep = '/'))
 
 result_chart <- data.frame(matrix(nrow = 12, ncol = 3))
 colnames(result_chart) <- c('estimate', 'lower_ci', 'upper_ci')
+rownames(result_chart) <- c('ITT', 'ITT (sIPTW)', 'AT', 'AT (sIPTW)', 'AT (lagged sIPCW)', 'AT (sIPTW + lagged sIPCW)',
+                            'AT (non-lagged sIPCW)', 'AT (sIPTW + non-lagged sIPCW)', 'AT (pooled sIPCW)',
+                            'AT (sIPTW + pooled sIPCW)', 'AT (modified non-lagged sIPCW)', 'AT (sIPTW + modified non-lagged sIPCW)')
 
-rownames(result_chart) <- c('ITT', 'ITT (IPTW)', 'AT', 'AT (IPTW)', 'AT (lagged IPCW)', 'AT (lagged IPCW + IPTW)',
-                                 'AT (non-lagged IPCW)', 'AT (non-lagged IPCW + IPTW)', 'AT (pooled IPCW)',
-                                 'AT (pooled IPCW + IPTW)', 'AT (mod non-lagged IPCW)', 'AT (mod non-lagged IPCW + IPTW)')
+result_chart[1, 'estimate'] <- exp(cox_itt$coef)
+result_chart[1, 'lower_ci'] <- exp(confint(cox_itt))[1]
+result_chart[1, 'upper_ci'] <- exp(confint(cox_itt))[2]
 
-result_chart[1, 'estimate'] <- exp(itt_model$coef)
-result_chart[1, 'lower_ci'] <- exp(confint(itt_model))[1]
-result_chart[1, 'upper_ci'] <- exp(confint(itt_model))[2]
+result_chart[2, 'estimate'] <- exp(cox_itt_siptw$coef)
+result_chart[2, 'lower_ci'] <- exp(confint(cox_itt_siptw))[1]
+result_chart[2, 'upper_ci'] <- exp(confint(cox_itt_siptw))[2]
 
-result_chart[2, 'estimate'] <- exp(itt_siptw_model$coef)
-result_chart[2, 'lower_ci'] <- exp(confint(itt_siptw_model))[1]
-result_chart[2, 'upper_ci'] <- exp(confint(itt_siptw_model))[2]
+result_chart[3, 'estimate'] <- exp(cox_at$coef)
+result_chart[3, 'lower_ci'] <- exp(confint(cox_at))[1]
+result_chart[3, 'upper_ci'] <- exp(confint(cox_at))[2]
 
-result_chart[3, 'estimate'] <- exp(at_model$coef)
-result_chart[3, 'lower_ci'] <- exp(confint(at_model))[1]
-result_chart[3, 'upper_ci'] <- exp(confint(at_model))[2]
+result_chart[4, 'estimate'] <- exp(cox_at_siptw$coef)
+result_chart[4, 'lower_ci'] <- exp(confint(cox_at_siptw))[1]
+result_chart[4, 'upper_ci'] <- exp(confint(cox_at_siptw))[2]
 
-result_chart[4, 'estimate'] <- exp(at_siptw_model$coef)
-result_chart[4, 'lower_ci'] <- exp(confint(at_siptw_model))[1]
-result_chart[4, 'upper_ci'] <- exp(confint(at_siptw_model))[2]
+result_chart[5, 'estimate'] <- exp(cox_at_sipcw_lag$coef)
+result_chart[5, 'lower_ci'] <- exp(confint(cox_at_sipcw_lag))[1]
+result_chart[5, 'upper_ci'] <- exp(confint(cox_at_sipcw_lag))[2]
 
-result_chart[5, 'estimate'] <- exp(at_ipcw_model$coef)
-result_chart[5, 'lower_ci'] <- exp(confint(at_ipcw_model))[1]
-result_chart[5, 'upper_ci'] <- exp(confint(at_ipcw_model))[2]
+result_chart[6, 'estimate'] <- exp(cox_at_siptw_sipcw_lag$coef)
+result_chart[6, 'lower_ci'] <- exp(confint(cox_at_siptw_sipcw_lag))[1]
+result_chart[6, 'upper_ci'] <- exp(confint(cox_at_siptw_sipcw_lag))[2]
 
-result_chart[6, 'estimate'] <- exp(at_iptw_ipcw_model$coef)
-result_chart[6, 'lower_ci'] <- exp(confint(at_iptw_ipcw_model))[1]
-result_chart[6, 'upper_ci'] <- exp(confint(at_iptw_ipcw_model))[2]
+result_chart[7, 'estimate'] <- exp(cox_at_sipcw_nonlag$coef)
+result_chart[7, 'lower_ci'] <- exp(confint(cox_at_sipcw_nonlag))[1]
+result_chart[7, 'upper_ci'] <- exp(confint(cox_at_sipcw_nonlag))[2]
 
-result_chart[7, 'estimate'] <- exp(at_ipcw_nl_model$coef)
-result_chart[7, 'lower_ci'] <- exp(confint(at_ipcw_nl_model))[1]
-result_chart[7, 'upper_ci'] <- exp(confint(at_ipcw_nl_model))[2]
+result_chart[8, 'estimate'] <- exp(cox_at_siptw_sipcw_nonlag$coef)
+result_chart[8, 'lower_ci'] <- exp(confint(cox_at_siptw_sipcw_nonlag))[1]
+result_chart[8, 'upper_ci'] <- exp(confint(cox_at_siptw_sipcw_nonlag))[2]
 
-result_chart[8, 'estimate'] <- exp(at_ipcw_nl_iptw_model$coef)
-result_chart[8, 'lower_ci'] <- exp(confint(at_ipcw_nl_iptw_model))[1]
-result_chart[8, 'upper_ci'] <- exp(confint(at_ipcw_nl_iptw_model))[2]
+result_chart[9, 'estimate'] <- exp(cox_at_sipcw_pool$coef)
+result_chart[9, 'lower_ci'] <- exp(confint(cox_at_sipcw_pool))[1]
+result_chart[9, 'upper_ci'] <- exp(confint(cox_at_sipcw_pool))[2]
 
-result_chart[9, 'estimate'] <- exp(at_ipcw_pooled_model$coef)
-result_chart[9, 'lower_ci'] <- exp(confint(at_ipcw_pooled_model))[1]
-result_chart[9, 'upper_ci'] <- exp(confint(at_ipcw_pooled_model))[2]
+result_chart[10, 'estimate'] <- exp(cox_at_siptw_sipcw_pool$coef)
+result_chart[10, 'lower_ci'] <- exp(confint(cox_at_siptw_sipcw_pool))[1]
+result_chart[10, 'upper_ci'] <- exp(confint(cox_at_siptw_sipcw_pool))[2]
 
-result_chart[10, 'estimate'] <- exp(at_ipcw_pooled_iptw_model$coef)
-result_chart[10, 'lower_ci'] <- exp(confint(at_ipcw_pooled_iptw_model))[1]
-result_chart[10, 'upper_ci'] <- exp(confint(at_ipcw_pooled_iptw_model))[2]
+result_chart[11, 'estimate'] <- exp(cox_at_sipcw_mod$coef)
+result_chart[11, 'lower_ci'] <- exp(confint(cox_at_sipcw_mod))[1]
+result_chart[11, 'upper_ci'] <- exp(confint(cox_at_sipcw_mod))[2]
 
-result_chart[11, 'estimate'] <- exp(at_ipcw_nl_mod_model$coef)
-result_chart[11, 'lower_ci'] <- exp(confint(at_ipcw_nl_mod_model))[1]
-result_chart[11, 'upper_ci'] <- exp(confint(at_ipcw_nl_mod_model))[2]
-
-result_chart[12, 'estimate'] <- exp(at_ipcw_nl_mod_iptw_model$coef)
-result_chart[12, 'lower_ci'] <- exp(confint(at_ipcw_nl_mod_iptw_model))[1]
-result_chart[12, 'upper_ci'] <- exp(confint(at_ipcw_nl_mod_iptw_model))[2]
+result_chart[12, 'estimate'] <- exp(cox_at_siptw_sipcw_mod$coef)
+result_chart[12, 'lower_ci'] <- exp(confint(cox_at_siptw_sipcw_mod))[1]
+result_chart[12, 'upper_ci'] <- exp(confint(cox_at_siptw_sipcw_mod))[2]
 
 result_chart <- cbind(model = row.names(result_chart), result_chart, row.names = NULL)
-write_xlsx(result_chart, paste(path_results, 'result_chart.xlsx', sep ='/'))
+result_chart <- result_chart[c(2,4,6,8,10,12),]
 
-#summary_cox_results <- result_chart[c(2,4,6,8,10),]
-summary_cox_results <- result_chart[c(2,4,6,8,10,12),]
-summary_cox_results$model <- factor(summary_cox_results$model, levels = rev(summary_cox_results$model))
+saveRDS(result_chart, file = paste(path_vis, 'cox_results_stab.xlsx', sep = '/'))
 
-setwd(path_results)
+# unstabilized weights
+cox_itt <- readRDS(paste(path_results, 'cox_itt.rds', sep = '/'))
+cox_itt_iptw <- readRDS(paste(path_results, 'cox_itt_iptw.rds', sep = '/'))
+cox_at <- readRDS(paste(path_results, 'cox_at.rds', sep = '/'))
+cox_at_iptw <- readRDS(paste(path_results, 'cox_at_iptw.rds', sep = '/'))
+cox_at_ipcw_lag <- readRDS(paste(path_results, 'cox_at_ipcw_lag.rds', sep = '/'))
+cox_at_iptw_ipcw_lag <- readRDS(paste(path_results, 'cox_at_iptw_ipcw_lag.rds', sep = '/'))
+cox_at_ipcw_nonlag <- readRDS(paste(path_results, 'cox_at_ipcw_nonlag.rds', sep = '/'))
+cox_at_iptw_ipcw_nonlag <- readRDS(paste(path_results, 'cox_at_iptw_ipcw_nonlag.rds', sep = '/'))
+cox_at_ipcw_pool <- readRDS(paste(path_results, 'cox_at_ipcw_pool.rds', sep = '/'))
+cox_at_iptw_ipcw_pool <- readRDS(paste(path_results, 'cox_at_iptw_ipcw_pool.rds', sep = '/'))
+cox_at_ipcw_mod <- readRDS(paste(path_results, 'cox_at_ipcw_mod.rds', sep = '/'))
+cox_at_iptw_ipcw_mod <- readRDS(paste(path_results, 'cox_at_iptw_ipcw_mod.rds', sep = '/'))
 
+result_chart <- data.frame(matrix(nrow = 12, ncol = 3))
+colnames(result_chart) <- c('estimate', 'lower_ci', 'upper_ci')
+rownames(result_chart) <- c('ITT', 'ITT (IPTW)', 'AT', 'AT (IPTW)', 'AT (lagged IPCW)', 'AT (IPTW + lagged IPCW)',
+                            'AT (non-lagged IPCW)', 'AT (IPTW + non-lagged IPCW)', 'AT (pooled IPCW)',
+                            'AT (IPTW + pooled IPCW)', 'AT (modified non-lagged IPCW)', 'AT (IPTW + modified non-lagged IPCW)')
 
-#### IR RESULTS ####
+result_chart[1, 'estimate'] <- exp(cox_itt$coef)
+result_chart[1, 'lower_ci'] <- exp(confint(cox_itt))[1]
+result_chart[1, 'upper_ci'] <- exp(confint(cox_itt))[2]
+
+result_chart[2, 'estimate'] <- exp(cox_itt_iptw$coef)
+result_chart[2, 'lower_ci'] <- exp(confint(cox_itt_iptw))[1]
+result_chart[2, 'upper_ci'] <- exp(confint(cox_itt_iptw))[2]
+
+result_chart[3, 'estimate'] <- exp(cox_at$coef)
+result_chart[3, 'lower_ci'] <- exp(confint(cox_at))[1]
+result_chart[3, 'upper_ci'] <- exp(confint(cox_at))[2]
+
+result_chart[4, 'estimate'] <- exp(cox_at_iptw$coef)
+result_chart[4, 'lower_ci'] <- exp(confint(cox_at_iptw))[1]
+result_chart[4, 'upper_ci'] <- exp(confint(cox_at_iptw))[2]
+
+result_chart[5, 'estimate'] <- exp(cox_at_ipcw_lag$coef)
+result_chart[5, 'lower_ci'] <- exp(confint(cox_at_ipcw_lag))[1]
+result_chart[5, 'upper_ci'] <- exp(confint(cox_at_ipcw_lag))[2]
+
+result_chart[6, 'estimate'] <- exp(cox_at_iptw_ipcw_lag$coef)
+result_chart[6, 'lower_ci'] <- exp(confint(cox_at_iptw_ipcw_lag))[1]
+result_chart[6, 'upper_ci'] <- exp(confint(cox_at_iptw_ipcw_lag))[2]
+
+result_chart[7, 'estimate'] <- exp(cox_at_ipcw_nonlag$coef)
+result_chart[7, 'lower_ci'] <- exp(confint(cox_at_ipcw_nonlag))[1]
+result_chart[7, 'upper_ci'] <- exp(confint(cox_at_ipcw_nonlag))[2]
+
+result_chart[8, 'estimate'] <- exp(cox_at_iptw_ipcw_nonlag$coef)
+result_chart[8, 'lower_ci'] <- exp(confint(cox_at_iptw_ipcw_nonlag))[1]
+result_chart[8, 'upper_ci'] <- exp(confint(cox_at_iptw_ipcw_nonlag))[2]
+
+result_chart[9, 'estimate'] <- exp(cox_at_ipcw_pool$coef)
+result_chart[9, 'lower_ci'] <- exp(confint(cox_at_ipcw_pool))[1]
+result_chart[9, 'upper_ci'] <- exp(confint(cox_at_ipcw_pool))[2]
+
+result_chart[10, 'estimate'] <- exp(cox_at_iptw_ipcw_pool$coef)
+result_chart[10, 'lower_ci'] <- exp(confint(cox_at_iptw_ipcw_pool))[1]
+result_chart[10, 'upper_ci'] <- exp(confint(cox_at_iptw_ipcw_pool))[2]
+
+result_chart[11, 'estimate'] <- exp(cox_at_ipcw_mod$coef)
+result_chart[11, 'lower_ci'] <- exp(confint(cox_at_ipcw_mod))[1]
+result_chart[11, 'upper_ci'] <- exp(confint(cox_at_ipcw_mod))[2]
+
+result_chart[12, 'estimate'] <- exp(cox_at_iptw_ipcw_mod$coef)
+result_chart[12, 'lower_ci'] <- exp(confint(cox_at_iptw_ipcw_mod))[1]
+result_chart[12, 'upper_ci'] <- exp(confint(cox_at_iptw_ipcw_mod))[2]
+
+result_chart <- cbind(model = row.names(result_chart), result_chart, row.names = NULL)
+result_chart <- result_chart[c(2,4,6,8,10,12),]
+saveRDS(result_chart, file = paste(path_vis, 'cox_results_unstab.xlsx', sep = '/'))
+
+#### INCIDENCE RATE RATIO RESULTS ####
 
 bootstrap_ci <- readRDS(paste(path_results, 'bootstrap_ci.rds', sep = '/'))
+
 time <- data.frame(time = c(unique(cohort$month_year))) %>% 
   arrange(time)
 
 # ITT IPTW: itt.2019-01.iptw.IR
-itt_iptw_IR <- bootstrap_ci %>%
-  filter(grepl("^itt.*iptw\\.IR$", variable)) %>% 
+ir_itt_iptw <- bootstrap_ci %>%
+  filter(grepl("^ir\\.itt\\.iptw\\.2.*\\.IRR$", variable)) %>% 
   select(-variable)
 
-itt_iptw_IR <- itt_iptw_IR[-1,]
-itt_iptw_IR <- cbind(time, variable = 'ITT (IPTW)', itt_iptw_IR)
+ir_itt_iptw <- ir_itt_iptw[-1,]
+ir_itt_iptw <- cbind(time, variable = 'ITT (IPTW)', ir_itt_iptw)
 
 # AT IPTW: att.2019-01.iptw.IR
 at_iptw_IR <- bootstrap_ci %>%
@@ -452,10 +488,16 @@ at_iptw_ipcw_nl_mod_IR <- bootstrap_ci %>%
   select(-variable)
 
 at_iptw_ipcw_nl_mod_IR <- cbind(time, variable = 'AT (mod non-lagged IPCW + IPTW)', at_iptw_ipcw_nl_mod_IR)
+IR_results <- rbind(itt_iptw_IR, at_iptw_IR, at_iptw_ipcw_IR, at_iptw_ipcw_nl_IR, at_iptw_ipcw_pooled_IR, at_iptw_ipcw_nl_mod_IR)
+
+
+
+
+
+
+
 
 # Summary plot
-
-IR_results <- rbind(itt_iptw_IR, at_iptw_IR, at_iptw_ipcw_IR, at_iptw_ipcw_nl_IR, at_iptw_ipcw_pooled_IR, at_iptw_ipcw_nl_mod_IR)
 
 png(filename="IR_over_time_by_model.png", width=6000, height=4000, res=500)
 

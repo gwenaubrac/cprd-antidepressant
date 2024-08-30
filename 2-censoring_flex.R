@@ -40,12 +40,10 @@ censor_desc <- "censor_desc.txt"
 writeLines("Censoring description:", censor_desc)
 cat(paste("Date:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), '\n'), file = censor_desc, append= TRUE)
 
-#### DEFINE GRACE PERIOD ####
-
 #### SENSITIVITY ANALYSIS: FLEXIBLE GRACE PERIOD ####
 # The grace period for each patient is set to be the duration of the supply for each rx
 
-trt_supply_flex <- readRDS(file = paste(path_cohort, 'trt_supply_raw.rds', sep = '/'))
+trt_supply_flex <- readRDS(file = paste(path_main, 'trt_supply_raw.rds', sep = '/'))
 summary(trt_supply_flex$date)
 
 # define three scenarios for discontinuation: single refill for trt, gap in refill, or last refill

@@ -29,9 +29,6 @@ library(ggplot2)
 path_main <- "Z:/EPI/Protocol 24_004042/Gwen/data/cohort/main"
 path_cohort <- "Z:/EPI/Protocol 24_004042/Gwen/data/cohort/sensitivity/90_day_grace_period"
 cohort <- readRDS(file = paste(path_main, 'antidepressant_cohort.rds', sep = '/'))
-
-study_start = ymd(20190101)
-study_end = ymd(20221231) # end of recruitment
 study_follow_up_end = ymd(20240331) # end of follow-up
 
 setwd(path_cohort)
@@ -47,7 +44,8 @@ grace_period <- 90
 
 #### CENSORING DUE TO TREATMENT DISCONTINUATION ####
 
-trt_supply <- readRDS(file = paste(path_cohort, 'trt_supply_raw.rds', sep = '/'))
+# dataframe with number of days between end of rx supply and date of next rx
+trt_supply <- readRDS(file = paste(path_main, 'trt_supply_raw.rds', sep = '/'))
 
 ## Define scenarios for treatment discontinuation
 # 1. A patient had only 1 refill (single refill)
@@ -70,7 +68,7 @@ trt_supply %<>%
           gap = if_else (!is.na(gap_in_supply) & gap_in_supply>grace_period, 1, 0),
           disc_date_gap = if_else (gap == 1, prior_supply_end+grace_period, disc_date_gap))
 
-trt_supply %<>% # set earliest disc date, produces warning but still runs (returns inf for patients with no gap)
+trt_supply %<>% # set earliest disc date from gap, produces warning but still runs (returns inf for patients with no gap)
   mutate (disc_date_gap = min(disc_date_gap, na.rm = TRUE))
 
 # 3. for patients with no gap, disc_date is the latest supply_end + grace_period

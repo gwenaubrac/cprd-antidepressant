@@ -440,7 +440,7 @@ trt_supply %<>%
           gap = if_else (!is.na(gap_in_supply) & gap_in_supply>grace_period, 1, 0),
           disc_date_gap = if_else (gap == 1, prior_supply_end+grace_period, disc_date_gap))
 
-trt_supply %<>% # set earliest disc date, produces warning but still runs (returns inf for patients with no gap)
+trt_supply %<>% # set earliest disc date from gap, produces warning but still runs (returns inf for patients with no gap)
   mutate (disc_date_gap = min(disc_date_gap, na.rm = TRUE))
 
 # 3. for patients with no gap, disc_date is the latest supply_end + grace_period

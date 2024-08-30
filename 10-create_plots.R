@@ -16,6 +16,11 @@
 ##
 ## ---------------------------
 
+# analysis: flex_grace_period, 90_day_grace_period
+# male, female, young, old, 2019, 2020, 2021, 2022
+# depressed, not_depressed
+
+analysis <- ''
 
 #### LOAD PACKAGES ####
 
@@ -50,17 +55,69 @@ colors_adj = c('#f56864', '#6a00a8')
 
 #### DEFINE PATHS ####
 
-path_cohort <- "Z:/EPI/Protocol 24_004042/Gwen/data/cohort/main"
 path_main <- "Z:/EPI/Protocol 24_004042/Gwen/data/cohort/main"
-path_results <- "Z:/EPI/Protocol 24_004042/Gwen/results/main" 
 
 covariates <- readRDS(file = paste(path_main, 'covariates.rds', sep = '/'))
 comorbidities <- readRDS(file = paste(path_main, 'comorbidities.rds', sep = '/'))
 base_comorb <- readRDS(file = paste(path_main, 'base_comorb.rds', sep = '/'))
 dec_comorb <- readRDS(file = paste(path_main, 'dec_comorb.rds', sep = '/'))
 
-path_plots <- "Z:/EPI/Protocol 24_004042/Gwen/results/plots"
-setwd(path_plots) 
+if (analysis == 'main' |
+    analysis == '') {
+  path_cohort <- "Z:/EPI/Protocol 24_004042/Gwen/data/cohort/main"
+  path_results <- "Z:/EPI/Protocol 24_004042/Gwen/results/main"
+  path_plots <- "Z:/EPI/Protocol 24_004042/Gwen/results/plots/main"
+} else if (analysis == 'male') {
+  path_cohort <- "Z:/EPI/Protocol 24_004042/Gwen/data/cohort/subgroup/male"
+  path_results <- "Z:/EPI/Protocol 24_004042/Gwen/results/subgroup/male"
+  path_plots <- "Z:/EPI/Protocol 24_004042/Gwen/results/plots/male"
+} else if (analysis == 'female') {
+  path_cohort <- "Z:/EPI/Protocol 24_004042/Gwen/data/cohort/subgroup/female"
+  path_results <- "Z:/EPI/Protocol 24_004042/Gwen/results/subgroup/female"
+  path_plots <- "Z:/EPI/Protocol 24_004042/Gwen/results/plots/female"
+} else if (analysis == 'young') {
+  path_cohort <- "Z:/EPI/Protocol 24_004042/Gwen/data/cohort/subgroup/young"
+  path_results <- "Z:/EPI/Protocol 24_004042/Gwen/results/subgroup/young"
+  path_plots <- "Z:/EPI/Protocol 24_004042/Gwen/results/plots/young"
+} else if (analysis == 'old') {
+  path_cohort <- "Z:/EPI/Protocol 24_004042/Gwen/data/cohort/subgroup/old"
+  path_results <- "Z:/EPI/Protocol 24_004042/Gwen/results/subgroup/old"
+  path_plots <- "Z:/EPI/Protocol 24_004042/Gwen/results/plots/old"
+} else if (analysis == '2019') {
+  path_cohort <- "Z:/EPI/Protocol 24_004042/Gwen/data/cohort/subgroup/2019"
+  path_results <- "Z:/EPI/Protocol 24_004042/Gwen/results/subgroup/2019"
+  path_plots <- "Z:/EPI/Protocol 24_004042/Gwen/results/plots/2019"
+} else if (analysis == '2020') {
+  path_cohort <- "Z:/EPI/Protocol 24_004042/Gwen/data/cohort/subgroup/2020"
+  path_results <- "Z:/EPI/Protocol 24_004042/Gwen/results/subgroup/2020"
+  path_plots <- "Z:/EPI/Protocol 24_004042/Gwen/results/plots/2020"
+} else if (analysis == '2021') {
+  path_cohort <- "Z:/EPI/Protocol 24_004042/Gwen/data/cohort/subgroup/2021"
+  path_results <- "Z:/EPI/Protocol 24_004042/Gwen/results/subgroup/2021"
+  path_plots <- "Z:/EPI/Protocol 24_004042/Gwen/results/plots/2021"
+} else if (analysis == '2022') {
+  path_cohort <- "Z:/EPI/Protocol 24_004042/Gwen/data/cohort/subgroup/2022"
+  path_results <- "Z:/EPI/Protocol 24_004042/Gwen/results/subgroup/2022"
+  path_plots <- "Z:/EPI/Protocol 24_004042/Gwen/results/plots/2022"
+} else if (analysis == 'flex_grace_period') {
+  path_cohort <- "Z:/EPI/Protocol 24_004042/Gwen/data/cohort/sensitivity/flex_grace_period"
+  path_results <- "Z:/EPI/Protocol 24_004042/Gwen/results/sensitivity/flex_grace_period"
+  path_plots <- "Z:/EPI/Protocol 24_004042/Gwen/results/plots/flex_grace_period"
+} else if (analysis == '90_day_grace_period') {
+  path_cohort <- "Z:/EPI/Protocol 24_004042/Gwen/data/cohort/sensitivity/90_day_grace_period"
+  path_results <- "Z:/EPI/Protocol 24_004042/Gwen/results/sensitivity/90_day_grace_period"
+  path_plots <- "Z:/EPI/Protocol 24_004042/Gwen/results/plots/90_day_grace_period"
+} else if (analysis == 'depressed') {
+  path_cohort <- "Z:/EPI/Protocol 24_004042/Gwen/data/cohort/subgroup/depressed"
+  path_results <- "Z:/EPI/Protocol 24_004042/Gwen/results/subgroup/depressed"
+  path_plots <- "Z:/EPI/Protocol 24_004042/Gwen/results/plots/depressed"
+} else if (analysis == 'not_depressed') {
+  path_cohort <- "Z:/EPI/Protocol 24_004042/Gwen/data/cohort/subgroup/not_depressed"
+  path_results <- "Z:/EPI/Protocol 24_004042/Gwen/results/subgroup/not_depressed"
+  path_plots <- "Z:/EPI/Protocol 24_004042/Gwen/results/plots/not_depressed"
+} 
+
+setwd(path_plots)
 
 #### TABLE 1 ####
 
@@ -143,7 +200,7 @@ write.table (table1 , "table1.csv", col.names = T, row.names=F, append= F, sep='
 cohort <- readRDS(file = paste(path_cohort, 'antidepressant_cohort_covariates.rds', sep = '/'))
 
 base_variables <- c('hypertension_base', 'depression_base', 'hyperlipidemia_base', 'suicidal_ideation_self_harm_base') # most common comorb
-base_variables <- c(covariates) # specified covariates
+#base_variables <- c(covariates) # specified covariates
 grouping_var <- 'month_year' 
 trt_col_name <- 'trt_dummy'
 
@@ -213,7 +270,7 @@ cov_desc_long$group <- as.Date(paste0(cov_desc_long$group, "-01"), format = "%Y-
 
 p <- ggplot(cov_desc_long, aes(x = group, y = value, color = variable, group = variable)) +
   geom_point(size = 1) +
-  geom_line(size = 0.5) +
+  geom_line(linewidth = 0.5) +
   labs(x = "calendar time", y = "coefficient of association") +
   scale_color_viridis_d(option = "C", begin = 0.1, end = 0.9, direction = -1, name = 'Covariate') +
   theme_minimal() +
@@ -250,8 +307,6 @@ rm(cohort)
 #### PROPENSITY SCORE DENSITY ####
 
 cohort <- readRDS(file = paste(path_cohort, 'antidepressant_cohort_covariates.rds', sep = '/'))
-
-cohort %<>% mutate(trt_dummy = as.factor(trt_dummy), trt = as.factor(trt))
 
 cohort <- cohort %>%
   filter (!is.na(sex))
@@ -377,18 +432,34 @@ cohort_ref <- cohort %>%
   filter(trt_dummy == 0)
 
 ref_itt <- survfit(Surv(as.numeric(itt_exit_date - entry_date), itt_event) ~ 1, data = cohort_ref)
-ref_itt_iptw <- survfit(Surv(as.numeric(itt_exit_date - entry_date), itt_event) ~ 1, data = cohort_ref, weights = siptw)
+ref_itt_siptw <- survfit(Surv(as.numeric(itt_exit_date - entry_date), itt_event) ~ 1, data = cohort_ref, weights = siptw)
 ref_at <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref)
-ref_at_iptw <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref, weights = iptw)
+ref_at_siptw <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref, weights = siptw)
 
-ref_at_iptw_ipcw_lagged <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref, weights = ipcw*iptw)
-ref_at_iptw_ipcw_nl <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref, weights = sipcw_nl*siptw)
-ref_at_iptw_ipcw_pooled <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref, weights = sipcw_pooled*siptw)
-ref_at_iptw_ipcw_nl_mod <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref, weights = sipcw_nl_mod*siptw)
+ref_at_siptw_sipcw_lag <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref, weights = sipcw_lag*siptw)
+ref_at_siptw_sipcw_nonlag <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref, weights = sipcw_nonlag*siptw)
+ref_at_siptw_sipcw_pool <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref, weights = sipcw_pool*siptw)
+ref_at_siptw_sipcw_mod <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref, weights = sipcw_mod*siptw)
 
 # ITT vs AT
 
-y_limit <- c(0, 0.03) 
+if (analysis %in% c('', 'main', '90_day_grace_period', 'flex_grace_period', 'female', '2019')) {
+  y_limit <- c(0, 0.15)
+} else if (analysis == 'young') {
+  y_limit <- c(0, 0.06)
+} else if (analysis == 'old') {
+  y_limit <- c(0, 0.45)
+} else if (analysis == 'male') {
+  y_limit <- c(0, 0.2)
+} else if (analysis == 'depressed') {
+  y_limit <- c(0., 0.12)
+} else if (analysis %in% c('not_depressed', '2021')) {
+  y_limit <- c(0, 0.16)
+} else if (analysis == '2020') {
+  y_limit <- c(0, 0.13)
+} else if (analysis == '2022') {
+  y_limit <- c(0, 0.07)
+}
 
 png("snri_incidence_by_analysis.png", width = 1800, height = 1800, res = 300)
 
@@ -409,7 +480,7 @@ plot(ref_itt,
      lwd = 2
 )
 
-lines(ref_itt_iptw,
+lines(ref_itt_siptw,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#f56864',
@@ -423,15 +494,15 @@ lines(ref_at,
       lty = 2,
       lwd = 2)
 
-lines(ref_at_iptw,
+lines(ref_at_siptw,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#6a00a8',
       lty = 1,
       lwd = 2)
 
-legend("topleft", 
-       legend = c("ITT", "ITT (IPTW)", "AT", "AT (IPTW)"),
+legend("bottomright", 
+       legend = c("ITT", "ITT (sIPTW)", "AT", "AT (sIPTW)"),
        col = c('#f56864', '#f56864', '#6a00a8', '#6a00a8'),
        lty = c(2, 1, 2, 1), 
        bty = 'n', 
@@ -443,8 +514,6 @@ dev.off()
 
 # comparing censoring models
 
-y_limit <- c(0, 0.03) 
-
 png(filename = "snri_incidence_by_model.png", width = 1800, height = 1800, res = 300)
 
 par(lab = c(10, 10, 7), 
@@ -452,7 +521,7 @@ par(lab = c(10, 10, 7),
     bty = 'n'
 )
 
-plot(ref_at_iptw_ipcw_lagged,
+plot(ref_at_siptw_sipcw_lag,
      fun = function(x) 1 - x,
      ylab = "cumulative probability of death",
      xlab = "days since cohort entry",
@@ -464,37 +533,37 @@ plot(ref_at_iptw_ipcw_lagged,
      lwd = 2
 ) 
 
-lines(ref_at_iptw,
+lines(ref_at_siptw,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#6a00a8',
       lty = 2,
       lwd = 2)
 
-lines(ref_at_iptw_ipcw_nl,
+lines(ref_at_siptw_sipcw_nonlag,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#d53e4f', 
       lwd = 2
 )
 
-lines(ref_at_iptw_ipcw_pooled,
+lines(ref_at_siptw_sipcw_pool,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#f9a463', 
       lwd = 2
 )
 
-lines(ref_at_iptw_ipcw_nl_mod,
+lines(ref_at_siptw_sipcw_mod,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#f9c43d', 
       lwd = 2
 )
 
-legend("topleft", 
-       legend = c("AT (IPTW)", "AT (IPTW + lagged IPCW)", "AT (IPTW + non-lagged IPCW)", 
-                  "AT (IPTW + pooled IPCW)", "AT (IPTW + modified nl IPCW"),
+legend("bottomright", 
+       legend = c("AT (sIPTW)", "AT (sIPTW + lagged sIPCW)", "AT (sIPTW + non-lagged sIPCW)", 
+                  "AT (sIPTW + pooled sIPCW)", "AT (sIPTW + modified non-lagged sIPCW"),
        col = c( '#6a00a8', '#9a00b1', '#d53e4f', '#f9a463', '#f9c43d'),
        lty = c(2, 1, 1, 1, 1), 
        cex = 0.8,
@@ -514,18 +583,16 @@ cohort_comp <- cohort %>%
   filter(trt_dummy == 1)
 
 comp_itt <- survfit(Surv(as.numeric(itt_exit_date-entry_date), itt_event) ~ 1, data = cohort_comp)
-comp_itt_iptw <- survfit(Surv(as.numeric(itt_exit_date-entry_date), itt_event) ~ 1, data = cohort_comp, weights = iptw)
+comp_itt_siptw <- survfit(Surv(as.numeric(itt_exit_date-entry_date), itt_event) ~ 1, data = cohort_comp, weights = siptw)
 comp_at <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp)
-comp_at_iptw <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp, weights = iptw)
+comp_at_siptw <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp, weights = siptw)
 
-comp_at_iptw_ipcw_lagged <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp, weights = ipcw*iptw)
-comp_at_iptw_ipcw_nl <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp, weights = ipcw_nl*iptw)
-comp_at_iptw_ipcw_pooled <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp, weights = ipcw_pooled*iptw)
-comp_at_iptw_ipcw_nl_mod <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp, weights = ipcw_nl_mod*iptw)
+comp_at_siptw_sipcw_lag <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp, weights = sipcw_lag*siptw)
+comp_at_siptw_sipcw_nonlag <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp, weights = sipcw_nonlag*siptw)
+comp_at_siptw_sipcw_pool <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp, weights = sipcw_pool*siptw)
+comp_at_siptw_sipcw_mod <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp, weights = sipcw_mod*siptw)
 
 # ITT vs AT
-
-y_limit <- c(0, 0.03) 
 
 png("ssri_incidence_by_analysis.png", width = 1800, height = 1800, res = 300)
 
@@ -546,7 +613,7 @@ plot(comp_itt,
      lwd = 2
 )
 
-lines(comp_itt_iptw,
+lines(comp_itt_siptw,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#f56864',
@@ -560,15 +627,15 @@ lines(comp_at,
       lty = 2,
       lwd = 2)
 
-lines(comp_at_iptw,
+lines(comp_at_siptw,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#6a00a8',
       lty = 1,
       lwd = 2)
 
-legend("topleft", 
-       legend = c("ITT", "ITT (IPTW)", "AT", "AT (IPTW)"),
+legend("bottomright", 
+       legend = c("ITT", "ITT (sIPTW)", "AT", "AT (sIPTW)"),
        col = c('#f56864', '#f56864', '#6a00a8', '#6a00a8'),
        lty = c(2, 1, 2, 1), 
        bty = 'n', 
@@ -580,8 +647,6 @@ dev.off()
 
 # comparing censoring models
 
-y_limit <- c(0, 0.03)  
-
 png(filename = "ssri_incidence_by_model.png", width = 1800, height = 1800, res = 300)
 
 par(lab = c(10, 10, 7), 
@@ -589,7 +654,7 @@ par(lab = c(10, 10, 7),
     bty = 'n'
 )
 
-plot(comp_at_iptw_ipcw_lagged,
+plot(comp_at_siptw_sipcw_lag,
      fun = function(x) 1 - x,
      ylab = "cumulative probability of death",
      xlab = "days since cohort entry",
@@ -601,37 +666,37 @@ plot(comp_at_iptw_ipcw_lagged,
      lwd = 2
 ) 
 
-lines(comp_at_iptw,
+lines(comp_at_siptw,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#6a00a8',
       lty = 2,
       lwd = 2)
 
-lines(comp_at_iptw_ipcw_nl,
+lines(comp_at_siptw_sipcw_nonlag,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#d53e4f', 
       lwd = 2
 )
 
-lines(comp_at_iptw_ipcw_pooled,
+lines(comp_at_siptw_sipcw_pool,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#f9a463', 
       lwd = 2
 )
 
-lines(comp_at_iptw_ipcw_nl_mod,
+lines(comp_at_siptw_sipcw_mod,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#f9c43d', 
       lwd = 2
 )
 
-legend("topleft", 
-       legend = c("AT (IPTW)", "AT (IPTW + lagged IPCW)", "AT (IPTW + non-lagged IPCW)", 
-                  "AT (IPTW + pooled IPCW)", "AT (IPTW + modified nl IPCW"),
+legend("bottomright", 
+       legend = c("AT (sIPTW)", "AT (sIPTW + lagged sIPCW)", "AT (sIPTW + non-lagged sIPCW)", 
+                  "AT (sIPTW + pooled sIPCW)", "AT (sIPTW + modified non-lagged sIPCW"),
        col = c( '#6a00a8', '#9a00b1', '#d53e4f', '#f9a463', '#f9c43d'),
        lty = c(2, 1, 1, 1, 1), 
        cex = 0.8,
@@ -645,7 +710,8 @@ dev.off()
 
 cohort_long <- readRDS(file = paste(path_results, 'cohort_analytic_at.rds', sep = '/'))
 cohort <- readRDS(file = paste(path_cohort, 'antidepressant_cohort_iptw.rds', sep = '/'))
-times_dec <- readRDS(paste(path_main, 'times_dec.rds', sep = '/'))
+times_dec <- readRDS(paste(path_cohort, 'times_dec.rds', sep = '/'))
+times_dec
 
 ## REFERENCE GROUP ## 
 
@@ -655,20 +721,35 @@ cohort_long_ref <- cohort_long %>%
 cohort_ref <- cohort %>% 
   filter(trt_dummy == 0)
 
-ref_itt <- survfit(Surv(itt_follow_up, itt_event) ~ 1, data = cohort_ref)
-ref_itt_iptw <- survfit(Surv(itt_follow_up, itt_event) ~ 1, data = cohort_ref, weights = iptw)
+ref_itt <- survfit(Surv(as.numeric(itt_exit_date - entry_date), itt_event) ~ 1, data = cohort_ref)
+ref_itt_siptw <- survfit(Surv(as.numeric(itt_exit_date - entry_date), itt_event) ~ 1, data = cohort_ref, weights = siptw)
 ref_at <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref)
-ref_at_iptw <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref, weights = iptw)
+ref_at_siptw <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref, weights = siptw)
 
-ref_at_iptw_ipcw_lagged <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref, weights = ipcw*iptw)
-ref_at_iptw_ipcw_nl <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref, weights = ipcw_nl*iptw)
-ref_at_iptw_ipcw_pooled <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref, weights = ipcw_pooled*iptw)
-ref_at_iptw_ipcw_nl_mod <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref, weights = ipcw_nl_mod*iptw)
+ref_at_siptw_sipcw_lag <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref, weights = sipcw_lag*siptw)
+ref_at_siptw_sipcw_nonlag <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref, weights = sipcw_nonlag*siptw)
+ref_at_siptw_sipcw_pool <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref, weights = sipcw_pool*siptw)
+ref_at_siptw_sipcw_mod <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref, weights = sipcw_mod*siptw)
 
 # ITT vs AT
 
-y_limit <- c(0, 0.02) 
 x_limit <- c(0, 500)
+
+if (analysis %in% c('', 'main', '90_day_grace_period', 'flex_grace_period', '2019', '2020', '2021', '2022')) {
+  y_limit <- c(0, 0.05)
+} else if (analysis == 'young') {
+  y_limit <- c(0, 0.02)
+} else if (analysis == 'old') {
+  y_limit <- c(0, 0.2)
+} else if (analysis == 'male') {
+  y_limit <- c(0, 0.07)
+} else if (analysis == 'female') {
+  y_limit <- c(0, 0.04)
+} else if (analysis == 'depressed') {
+  y_limit <- c(0, 0.045)
+} else if (analysis == 'not_depressed') {
+  y_limit <- c(0, 0.055)
+} 
 
 png("snri_incidence_by_analysis_zoom.png", width = 1800, height = 1800, res = 300)
 
@@ -692,7 +773,7 @@ plot(ref_itt,
 
 abline(v = times_dec, col = '#f8e4a7', lty = 3, lwd = 1)
 
-lines(ref_itt_iptw,
+lines(ref_itt_siptw,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#f56864',
@@ -706,15 +787,15 @@ lines(ref_at,
       lty = 2,
       lwd = 2)
 
-lines(ref_at_iptw,
+lines(ref_at_siptw,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#6a00a8',
       lty = 1,
       lwd = 2)
 
-legend("topleft", 
-       legend = c("ITT", "ITT (IPTW)", "AT", "AT (IPTW)", "intervals"),
+legend("bottomright", 
+       legend = c("ITT", "ITT (sIPTW)", "AT", "AT (sIPTW)", "intervals"),
        col = c('#f56864', '#f56864', '#6a00a8', '#6a00a8', '#f8e4a7'),
        lty = c(2, 1, 2, 1, 3), 
        bty = 'n', 
@@ -733,7 +814,7 @@ par(lab = c(10, 10, 7),
     bty = 'n'
 )
 
-plot(ref_at_iptw_ipcw_lagged,
+plot(ref_at_siptw_sipcw_lag,
      fun = function(x) 1 - x,
      ylab = "cumulative probability of death",
      xlab = "days since cohort entry",
@@ -748,37 +829,37 @@ plot(ref_at_iptw_ipcw_lagged,
 
 abline(v = times_dec, col = '#f8e4a7', lty = 3, lwd = 1)
 
-lines(ref_at_iptw,
+lines(ref_at_siptw,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#6a00a8',
       lty = 2,
       lwd = 2)
 
-lines(ref_at_iptw_ipcw_nl,
+lines(ref_at_siptw_sipcw_nonlag,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#d53e4f', 
       lwd = 2
 )
 
-lines(ref_at_iptw_ipcw_pooled,
+lines(ref_at_siptw_sipcw_pool,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#f9a463', 
       lwd = 2
 )
 
-lines(ref_at_iptw_ipcw_nl_mod,
+lines(ref_at_siptw_sipcw_mod,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#f9c43d', 
       lwd = 2
 )
 
-legend("topleft", 
-       legend = c("AT (IPTW)", "AT (IPTW + lagged IPCW)", "AT (IPTW + non-lagged IPCW)", 
-                  "AT (IPTW + pooled IPCW)", "AT (IPTW + modified nl IPCW", 'intervals'),
+legend("bottomright", 
+       legend = c("AT (sIPTW)", "AT (sIPTW + lagged sIPCW)", "AT (sIPTW + non-lagged sIPCW)", 
+                  "AT (sIPTW + pooled sIPCW)", "AT (sIPTW + modified non-lagged sIPCW", 'intervals'),
        col = c( '#6a00a8', '#9a00b1', '#d53e4f', '#f9a463', '#f9c43d', '#f8e4a7'),
        lty = c(2, 1, 1, 1, 1, 3), 
        cex = 0.8,
@@ -798,19 +879,16 @@ cohort_comp <- cohort %>%
   filter(trt_dummy == 1)
 
 comp_itt <- survfit(Surv(as.numeric(itt_exit_date-entry_date), itt_event) ~ 1, data = cohort_comp)
-comp_itt_iptw <- survfit(Surv(as.numeric(itt_exit_date-entry_date), itt_event) ~ 1, data = cohort_comp, weights = iptw)
+comp_itt_siptw <- survfit(Surv(as.numeric(itt_exit_date-entry_date), itt_event) ~ 1, data = cohort_comp, weights = siptw)
 comp_at <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp)
-comp_at_iptw <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp, weights = iptw)
+comp_at_siptw <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp, weights = siptw)
 
-comp_at_iptw_ipcw_lagged <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp, weights = iptw*ipcw)
-comp_at_iptw_ipcw_nl <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp, weights = iptw*ipcw_nl)
-comp_at_iptw_ipcw_pooled <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp, weights = iptw*ipcw_pooled)
-comp_at_iptw_ipcw_nl_mod <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp, weights = iptw*ipcw_nl_mod)
+comp_at_siptw_sipcw_lag <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp, weights = sipcw_lag*siptw)
+comp_at_siptw_sipcw_nonlag <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp, weights = sipcw_nonlag*siptw)
+comp_at_siptw_sipcw_pool <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp, weights = sipcw_pool*siptw)
+comp_at_siptw_sipcw_mod <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp, weights = sipcw_mod*siptw)
 
 # ITT vs AT
-
-y_limit <- c(0, 0.02) 
-x_limit <- c(0, 500)
 
 png("ssri_incidence_by_analysis_zoom.png", width = 1800, height = 1800, res = 300)
 
@@ -834,7 +912,7 @@ plot(comp_itt,
 
 abline(v = times_dec, col = '#f8e4a7', lty = 3, lwd = 1)
 
-lines(comp_itt_iptw,
+lines(comp_itt_siptw,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#f56864',
@@ -848,15 +926,15 @@ lines(comp_at,
       lty = 2,
       lwd = 2)
 
-lines(comp_at_iptw,
+lines(comp_at_siptw,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#6a00a8',
       lty = 1,
       lwd = 2)
 
-legend("topleft", 
-       legend = c("ITT", "ITT (IPTW)", "AT", "AT (IPTW)", 'intervals'),
+legend("bottomright", 
+       legend = c("ITT", "ITT (sIPTW)", "AT", "AT (sIPTW)", 'intervals'),
        col = c('#f56864', '#f56864', '#6a00a8', '#6a00a8', '#f8e4a7'),
        lty = c(2, 1, 2, 1, 3), 
        bty = 'n', 
@@ -868,9 +946,6 @@ dev.off()
 
 # comparing censoring models
 
-y_limit <- c(0, 0.02) 
-x_limit <- c(0, 500)
-
 png(filename = "ssri_incidence_by_model_zoom.png", width = 1800, height = 1800, res = 300)
 
 par(lab = c(10, 10, 7), 
@@ -878,7 +953,7 @@ par(lab = c(10, 10, 7),
     bty = 'n'
 )
 
-plot(comp_at_iptw_ipcw_lagged,
+plot(comp_at_siptw_sipcw_lag,
      fun = function(x) 1 - x,
      ylab = "cumulative probability of death",
      xlab = "days since cohort entry",
@@ -893,37 +968,37 @@ plot(comp_at_iptw_ipcw_lagged,
 
 abline(v = times_dec, col = '#f8e4a7', lty = 3, lwd = 1)
 
-lines(comp_at_iptw,
+lines(comp_at_siptw,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#6a00a8',
       lty = 2,
       lwd = 2)
 
-lines(comp_at_iptw_ipcw_nl,
+lines(comp_at_siptw_sipcw_nonlag,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#d53e4f', 
       lwd = 2
 )
 
-lines(comp_at_iptw_ipcw_pooled,
+lines(comp_at_siptw_sipcw_pool,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#f9a463', 
       lwd = 2
 )
 
-lines(comp_at_iptw_ipcw_nl_mod,
+lines(comp_at_siptw_sipcw_mod,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#f9c43d', 
       lwd = 2
 )
 
-legend("topleft", 
-       legend = c("AT (IPTW)", "AT (IPTW + lagged IPCW)", "AT (IPTW + non-lagged IPCW)", 
-                  "AT (IPTW + pooled IPCW)", "AT (IPTW + modified nl IPCW", 'quartiles'),
+legend("bottomright", 
+       legend = c("AT (sIPTW)", "AT (sIPTW + lagged sIPCW)", "AT (sIPTW + non-lagged sIPCW)", 
+                  "AT (sIPTW + pooled sIPCW)", "AT (sIPTW + modified non-lagged sIPCW", 'intervals'),
        col = c( '#6a00a8', '#9a00b1', '#d53e4f', '#f9a463', '#f9c43d', '#f8e4a7'),
        lty = c(2, 1, 1, 1, 1, 3), 
        cex = 0.8,
@@ -935,80 +1010,80 @@ dev.off()
 
 #### FOREST PLOT - STABILIZED ####
 
-itt_model <- readRDS(paste(path_results, 'cox_no_weight.rds', sep = '/'))
-itt_iptw_model <- readRDS(paste(path_results, 'cox_siptw.rds', sep = '/'))
-at_model <- readRDS(paste(path_results, 'cox_at.rds', sep = '/'))
-at_iptw_model <- readRDS(paste(path_results, 'cox_at_siptw.rds', sep = '/'))
-at_ipcw_model <- readRDS(paste(path_results, 'cox_stab_lagged.rds', sep = '/'))
-at_iptw_ipcw_model <- readRDS(paste(path_results, 'cox_stab_lagged_iptw.rds', sep = '/'))
-at_ipcw_nl_model <- readRDS(paste(path_results, 'cox_nl_stab.rds', sep = '/'))
-at_ipcw_nl_iptw_model <- readRDS(paste(path_results, 'cox_nl_stab_iptw.rds', sep = '/'))
-at_ipcw_pooled_model <- readRDS(paste(path_results, 'cox_pooled_stab.rds', sep = '/'))
-at_ipcw_pooled_iptw_model <- readRDS(paste(path_results, 'cox_pooled_stab_iptw.rds', sep = '/'))
-at_ipcw_nl_mod_model <- readRDS(paste(path_results, 'cox_nl_mod_stab.rds', sep = '/'))
-at_ipcw_nl_mod_iptw_model <- readRDS(paste(path_results, 'cox_nl_mod_stab_iptw.rds', sep = '/'))
+cox_itt <- readRDS(paste(path_results, 'cox_itt.rds', sep = '/'))
+cox_itt_siptw <- readRDS(paste(path_results, 'cox_itt_siptw.rds', sep = '/'))
+cox_at <- readRDS(paste(path_results, 'cox_at.rds', sep = '/'))
+cox_at_siptw <- readRDS(paste(path_results, 'cox_at_siptw.rds', sep = '/'))
+cox_at_sipcw_lag <- readRDS(paste(path_results, 'cox_at_sipcw_lag.rds', sep = '/'))
+cox_at_siptw_sipcw_lag <- readRDS(paste(path_results, 'cox_at_siptw_sipcw_lag.rds', sep = '/'))
+cox_at_sipcw_nonlag <- readRDS(paste(path_results, 'cox_at_sipcw_nonlag.rds', sep = '/'))
+cox_at_siptw_sipcw_nonlag <- readRDS(paste(path_results, 'cox_at_siptw_sipcw_nonlag.rds', sep = '/'))
+cox_at_sipcw_pool <- readRDS(paste(path_results, 'cox_at_sipcw_pool.rds', sep = '/'))
+cox_at_siptw_sipcw_pool <- readRDS(paste(path_results, 'cox_at_siptw_sipcw_pool.rds', sep = '/'))
+cox_at_sipcw_mod <- readRDS(paste(path_results, 'cox_at_sipcw_mod.rds', sep = '/'))
+cox_at_siptw_sipcw_mod <- readRDS(paste(path_results, 'cox_at_siptw_sipcw_mod.rds', sep = '/'))
 
-result_chart <- data.frame(matrix(nrow = 12, ncol = 3))
-colnames(result_chart) <- c('estimate', 'lower_ci', 'upper_ci')
-rownames(result_chart) <- c('ITT', 'ITT (IPTW)', 'AT', 'AT (IPTW)', 'AT (lagged IPCW)', 'AT (lagged IPCW + IPTW)',
-                                 'AT (non-lagged IPCW)', 'AT (non-lagged IPCW + IPTW)', 'AT (pooled IPCW)',
-                                 'AT (pooled IPCW + sIPTW)', 'AT (mod non-lagged IPCW)', 'AT (mod non-lagged IPCW + IPTW)')
+cox_result_chart <- data.frame(matrix(nrow = 12, ncol = 3))
+colnames(cox_result_chart) <- c('estimate', 'lower_ci', 'upper_ci')
+rownames(cox_result_chart) <- c('ITT', 'ITT (sIPTW)', 'AT', 'AT (sIPTW)', 'AT (lagged sIPCW)', 'AT (sIPTW + lagged sIPCW)',
+                                 'AT (non-lagged sIPCW)', 'AT (sIPTW + non-lagged sIPCW)', 'AT (pooled sIPCW)',
+                                 'AT (sIPTW + pooled sIPCW)', 'AT (modified non-lagged sIPCW)', 'AT (sIPTW + modified non-lagged sIPCW)')
 
-result_chart[1, 'estimate'] <- exp(itt_model$coef)
-result_chart[1, 'lower_ci'] <- exp(confint(itt_model))[1]
-result_chart[1, 'upper_ci'] <- exp(confint(itt_model))[2]
+cox_result_chart[1, 'estimate'] <- exp(cox_itt$coef)
+cox_result_chart[1, 'lower_ci'] <- exp(confint(cox_itt))[1]
+cox_result_chart[1, 'upper_ci'] <- exp(confint(cox_itt))[2]
 
-result_chart[2, 'estimate'] <- exp(itt_iptw_model$coef)
-result_chart[2, 'lower_ci'] <- exp(confint(itt_iptw_model))[1]
-result_chart[2, 'upper_ci'] <- exp(confint(itt_iptw_model))[2]
+cox_result_chart[2, 'estimate'] <- exp(cox_itt_siptw$coef)
+cox_result_chart[2, 'lower_ci'] <- exp(confint(cox_itt_siptw))[1]
+cox_result_chart[2, 'upper_ci'] <- exp(confint(cox_itt_siptw))[2]
 
-result_chart[3, 'estimate'] <- exp(at_model$coef)
-result_chart[3, 'lower_ci'] <- exp(confint(at_model))[1]
-result_chart[3, 'upper_ci'] <- exp(confint(at_model))[2]
+cox_result_chart[3, 'estimate'] <- exp(cox_at$coef)
+cox_result_chart[3, 'lower_ci'] <- exp(confint(cox_at))[1]
+cox_result_chart[3, 'upper_ci'] <- exp(confint(cox_at))[2]
 
-result_chart[4, 'estimate'] <- exp(at_iptw_model$coef)
-result_chart[4, 'lower_ci'] <- exp(confint(at_iptw_model))[1]
-result_chart[4, 'upper_ci'] <- exp(confint(at_iptw_model))[2]
+cox_result_chart[4, 'estimate'] <- exp(cox_at_siptw$coef)
+cox_result_chart[4, 'lower_ci'] <- exp(confint(cox_at_siptw))[1]
+cox_result_chart[4, 'upper_ci'] <- exp(confint(cox_at_siptw))[2]
 
-result_chart[5, 'estimate'] <- exp(at_ipcw_model$coef)
-result_chart[5, 'lower_ci'] <- exp(confint(at_ipcw_model))[1]
-result_chart[5, 'upper_ci'] <- exp(confint(at_ipcw_model))[2]
+cox_result_chart[5, 'estimate'] <- exp(cox_at_sipcw_lag$coef)
+cox_result_chart[5, 'lower_ci'] <- exp(confint(cox_at_sipcw_lag))[1]
+cox_result_chart[5, 'upper_ci'] <- exp(confint(cox_at_sipcw_lag))[2]
 
-result_chart[6, 'estimate'] <- exp(at_iptw_ipcw_model$coef)
-result_chart[6, 'lower_ci'] <- exp(confint(at_iptw_ipcw_model))[1]
-result_chart[6, 'upper_ci'] <- exp(confint(at_iptw_ipcw_model))[2]
+cox_result_chart[6, 'estimate'] <- exp(cox_at_siptw_sipcw_lag$coef)
+cox_result_chart[6, 'lower_ci'] <- exp(confint(cox_at_siptw_sipcw_lag))[1]
+cox_result_chart[6, 'upper_ci'] <- exp(confint(cox_at_siptw_sipcw_lag))[2]
 
-result_chart[7, 'estimate'] <- exp(at_ipcw_nl_model$coef)
-result_chart[7, 'lower_ci'] <- exp(confint(at_ipcw_nl_model))[1]
-result_chart[7, 'upper_ci'] <- exp(confint(at_ipcw_nl_model))[2]
+cox_result_chart[7, 'estimate'] <- exp(cox_at_sipcw_nonlag$coef)
+cox_result_chart[7, 'lower_ci'] <- exp(confint(cox_at_sipcw_nonlag))[1]
+cox_result_chart[7, 'upper_ci'] <- exp(confint(cox_at_sipcw_nonlag))[2]
 
-result_chart[8, 'estimate'] <- exp(at_ipcw_nl_iptw_model$coef)
-result_chart[8, 'lower_ci'] <- exp(confint(at_ipcw_nl_iptw_model))[1]
-result_chart[8, 'upper_ci'] <- exp(confint(at_ipcw_nl_iptw_model))[2]
+cox_result_chart[8, 'estimate'] <- exp(cox_at_siptw_sipcw_nonlag$coef)
+cox_result_chart[8, 'lower_ci'] <- exp(confint(cox_at_siptw_sipcw_nonlag))[1]
+cox_result_chart[8, 'upper_ci'] <- exp(confint(cox_at_siptw_sipcw_nonlag))[2]
 
-result_chart[9, 'estimate'] <- exp(at_ipcw_pooled_model$coef)
-result_chart[9, 'lower_ci'] <- exp(confint(at_ipcw_pooled_model))[1]
-result_chart[9, 'upper_ci'] <- exp(confint(at_ipcw_pooled_model))[2]
+cox_result_chart[9, 'estimate'] <- exp(cox_at_sipcw_pool$coef)
+cox_result_chart[9, 'lower_ci'] <- exp(confint(cox_at_sipcw_pool))[1]
+cox_result_chart[9, 'upper_ci'] <- exp(confint(cox_at_sipcw_pool))[2]
 
-result_chart[10, 'estimate'] <- exp(at_ipcw_pooled_iptw_model$coef)
-result_chart[10, 'lower_ci'] <- exp(confint(at_ipcw_pooled_iptw_model))[1]
-result_chart[10, 'upper_ci'] <- exp(confint(at_ipcw_pooled_iptw_model))[2]
+cox_result_chart[10, 'estimate'] <- exp(cox_at_siptw_sipcw_pool$coef)
+cox_result_chart[10, 'lower_ci'] <- exp(confint(cox_at_siptw_sipcw_pool))[1]
+cox_result_chart[10, 'upper_ci'] <- exp(confint(cox_at_siptw_sipcw_pool))[2]
 
-result_chart[11, 'estimate'] <- exp(at_ipcw_nl_mod_model$coef)
-result_chart[11, 'lower_ci'] <- exp(confint(at_ipcw_nl_mod_model))[1]
-result_chart[11, 'upper_ci'] <- exp(confint(at_ipcw_nl_mod_model))[2]
+cox_result_chart[11, 'estimate'] <- exp(cox_at_sipcw_mod$coef)
+cox_result_chart[11, 'lower_ci'] <- exp(confint(cox_at_sipcw_mod))[1]
+cox_result_chart[11, 'upper_ci'] <- exp(confint(cox_at_sipcw_mod))[2]
 
-result_chart[12, 'estimate'] <- exp(at_ipcw_nl_mod_iptw_model$coef)
-result_chart[12, 'lower_ci'] <- exp(confint(at_ipcw_nl_mod_iptw_model))[1]
-result_chart[12, 'upper_ci'] <- exp(confint(at_ipcw_nl_mod_iptw_model))[2]
+cox_result_chart[12, 'estimate'] <- exp(cox_at_siptw_sipcw_mod$coef)
+cox_result_chart[12, 'lower_ci'] <- exp(confint(cox_at_siptw_sipcw_mod))[1]
+cox_result_chart[12, 'upper_ci'] <- exp(confint(cox_at_siptw_sipcw_mod))[2]
 
-result_chart <- cbind(model = row.names(result_chart), result_chart, row.names = NULL)
-write_xlsx(result_chart, paste(path_results, 'cox_ratios.xlsx', sep ='/'))
+cox_result_chart <- cbind(model = row.names(cox_result_chart), cox_result_chart, row.names = NULL)
+write_xlsx(cox_result_chart, paste(path_results, 'cox_ratios_stab.xlsx', sep ='/'))
 
-summary_cox_results <- result_chart[c(2,4,6,8,10,12),]
-summary_cox_results$model <- factor(summary_cox_results$model, levels = rev(summary_cox_results$model))
+summary_cox_results <- cox_result_chart[c(2,4,6,8,10,12),]
+model_order <- rev(c("ITT (sIPTW)", "AT (sIPTW)", "AT (sIPTW + lagged sIPCW)", "AT (sIPTW + non-lagged sIPCW)", 
+                     "AT (sIPTW + pooled sIPCW)", "AT (sIPTW + modified non-lagged sIPCW)"))
 
-model_order <- rev(c("ITT (IPTW)", "AT (IPTW)", "AT (lagged sIPCW + IPTW)", "AT (non-lagged IPCW + IPTW)", "AT (pooled IPCW + sIPTW)", "AT (mod non-lagged IPCW + IPTW)"))
 summary_cox_results$model <- factor(summary_cox_results$model, levels = model_order)
 model_colors <- rev(c('#f56864','#6a00a8', '#9a00b1', '#d53e4f', '#f9a463', '#f9c43d'))
 
@@ -1043,6 +1118,14 @@ y_labels <- rev(paste(
   sep = ''
 ))
 
+# in case some values are exactly the same for labeling:
+# y_labels <- rev(paste(
+#   c(round(summary_cox_results$estimate, 3)),
+#   ' (',round(summary_cox_results$lower_ci, 3),', ',
+#   round(summary_cox_results$upper_ci, 3), ')',
+#   sep = ''
+# ))
+
 y_labels
 
 dummy_data <- data.frame(
@@ -1070,7 +1153,7 @@ p2
 combined_plot <- plot_grid(p, p2, ncol = 2, rel_widths = c(3, 1))
 combined_plot
 
-ggsave("forest_plot.png", plot = combined_plot, width = 6, height = 3, units = "in", bg = 'white')
+ggsave("forest_plot_HR_stab.png", plot = combined_plot, width = 6, height = 3, units = "in", bg = 'white')
 
 dev.off()
 
@@ -1078,80 +1161,79 @@ dev.off()
 
 #### FOREST PLOT - UNSTABILIZED ####
 
-itt_model <- readRDS(paste(path_results, 'cox_no_weight.rds', sep = '/'))
-itt_iptw_model <- readRDS(paste(path_results, 'cox_iptw.rds', sep = '/'))
-at_model <- readRDS(paste(path_results, 'cox_at.rds', sep = '/'))
-at_iptw_model <- readRDS(paste(path_results, 'cox_at_iptw.rds', sep = '/'))
-at_ipcw_model <- readRDS(paste(path_results, 'cox_lagged.rds', sep = '/'))
-at_iptw_ipcw_model <- readRDS(paste(path_results, 'cox_lagged_iptw.rds', sep = '/'))
-at_ipcw_nl_model <- readRDS(paste(path_results, 'cox_nl.rds', sep = '/'))
-at_ipcw_nl_iptw_model <- readRDS(paste(path_results, 'cox_nl_iptw.rds', sep = '/'))
-at_ipcw_pooled_model <- readRDS(paste(path_results, 'cox_pooled.rds', sep = '/'))
-at_ipcw_pooled_iptw_model <- readRDS(paste(path_results, 'cox_pooled_iptw.rds', sep = '/'))
-at_ipcw_nl_mod_model <- readRDS(paste(path_results, 'cox_nl_mod.rds', sep = '/'))
-at_ipcw_nl_mod_iptw_model <- readRDS(paste(path_results, 'cox_nl_mod_iptw.rds', sep = '/'))
+cox_itt <- readRDS(paste(path_results, 'cox_itt.rds', sep = '/'))
+cox_itt_iptw <- readRDS(paste(path_results, 'cox_itt_iptw.rds', sep = '/'))
+cox_at <- readRDS(paste(path_results, 'cox_at.rds', sep = '/'))
+cox_at_iptw <- readRDS(paste(path_results, 'cox_at_iptw.rds', sep = '/'))
+cox_at_ipcw_lag <- readRDS(paste(path_results, 'cox_at_ipcw_lag.rds', sep = '/'))
+cox_at_iptw_ipcw_lag <- readRDS(paste(path_results, 'cox_at_iptw_ipcw_lag.rds', sep = '/'))
+cox_at_ipcw_nonlag <- readRDS(paste(path_results, 'cox_at_ipcw_nonlag.rds', sep = '/'))
+cox_at_iptw_ipcw_nonlag <- readRDS(paste(path_results, 'cox_at_iptw_ipcw_nonlag.rds', sep = '/'))
+cox_at_ipcw_pool <- readRDS(paste(path_results, 'cox_at_ipcw_pool.rds', sep = '/'))
+cox_at_iptw_ipcw_pool <- readRDS(paste(path_results, 'cox_at_iptw_ipcw_pool.rds', sep = '/'))
+cox_at_ipcw_mod <- readRDS(paste(path_results, 'cox_at_ipcw_mod.rds', sep = '/'))
+cox_at_iptw_ipcw_mod <- readRDS(paste(path_results, 'cox_at_iptw_ipcw_mod.rds', sep = '/'))
 
-result_chart <- data.frame(matrix(nrow = 12, ncol = 3))
-colnames(result_chart) <- c('estimate', 'lower_ci', 'upper_ci')
-rownames(result_chart) <- c('ITT', 'ITT (IPTW)', 'AT', 'AT (IPTW)', 'AT (lagged IPCW)', 'AT (lagged IPCW + IPTW)',
-                            'AT (non-lagged IPCW)', 'AT (non-lagged IPCW + IPTW)', 'AT (pooled IPCW)',
-                            'AT (pooled IPCW + sIPTW)', 'AT (mod non-lagged IPCW)', 'AT (mod non-lagged IPCW + IPTW)')
+cox_result_chart <- data.frame(matrix(nrow = 12, ncol = 3))
+colnames(cox_result_chart) <- c('estimate', 'lower_ci', 'upper_ci')
+rownames(cox_result_chart) <- c('ITT', 'ITT (IPTW)', 'AT', 'AT (IPTW)', 'AT (lagged IPCW)', 'AT (IPTW + lagged IPCW)',
+                            'AT (non-lagged IPCW)', 'AT (IPTW + non-lagged IPCW)', 'AT (pooled IPCW)',
+                            'AT (IPTW + pooled IPCW)', 'AT (modified non-lagged IPCW)', 'AT (IPTW + modified non-lagged IPCW)')
 
-result_chart[1, 'estimate'] <- exp(itt_model$coef)
-result_chart[1, 'lower_ci'] <- exp(confint(itt_model))[1]
-result_chart[1, 'upper_ci'] <- exp(confint(itt_model))[2]
+cox_result_chart[1, 'estimate'] <- exp(cox_itt$coef)
+cox_result_chart[1, 'lower_ci'] <- exp(confint(cox_itt))[1]
+cox_result_chart[1, 'upper_ci'] <- exp(confint(cox_itt))[2]
 
-result_chart[2, 'estimate'] <- exp(itt_iptw_model$coef)
-result_chart[2, 'lower_ci'] <- exp(confint(itt_iptw_model))[1]
-result_chart[2, 'upper_ci'] <- exp(confint(itt_iptw_model))[2]
+cox_result_chart[2, 'estimate'] <- exp(cox_itt_iptw$coef)
+cox_result_chart[2, 'lower_ci'] <- exp(confint(cox_itt_iptw))[1]
+cox_result_chart[2, 'upper_ci'] <- exp(confint(cox_itt_iptw))[2]
 
-result_chart[3, 'estimate'] <- exp(at_model$coef)
-result_chart[3, 'lower_ci'] <- exp(confint(at_model))[1]
-result_chart[3, 'upper_ci'] <- exp(confint(at_model))[2]
+cox_result_chart[3, 'estimate'] <- exp(cox_at$coef)
+cox_result_chart[3, 'lower_ci'] <- exp(confint(cox_at))[1]
+cox_result_chart[3, 'upper_ci'] <- exp(confint(cox_at))[2]
 
-result_chart[4, 'estimate'] <- exp(at_iptw_model$coef)
-result_chart[4, 'lower_ci'] <- exp(confint(at_iptw_model))[1]
-result_chart[4, 'upper_ci'] <- exp(confint(at_iptw_model))[2]
+cox_result_chart[4, 'estimate'] <- exp(cox_at_iptw$coef)
+cox_result_chart[4, 'lower_ci'] <- exp(confint(cox_at_iptw))[1]
+cox_result_chart[4, 'upper_ci'] <- exp(confint(cox_at_iptw))[2]
 
-result_chart[5, 'estimate'] <- exp(at_ipcw_model$coef)
-result_chart[5, 'lower_ci'] <- exp(confint(at_ipcw_model))[1]
-result_chart[5, 'upper_ci'] <- exp(confint(at_ipcw_model))[2]
+cox_result_chart[5, 'estimate'] <- exp(cox_at_ipcw_lag$coef)
+cox_result_chart[5, 'lower_ci'] <- exp(confint(cox_at_ipcw_lag))[1]
+cox_result_chart[5, 'upper_ci'] <- exp(confint(cox_at_ipcw_lag))[2]
 
-result_chart[6, 'estimate'] <- exp(at_iptw_ipcw_model$coef)
-result_chart[6, 'lower_ci'] <- exp(confint(at_iptw_ipcw_model))[1]
-result_chart[6, 'upper_ci'] <- exp(confint(at_iptw_ipcw_model))[2]
+cox_result_chart[6, 'estimate'] <- exp(cox_at_iptw_ipcw_lag$coef)
+cox_result_chart[6, 'lower_ci'] <- exp(confint(cox_at_iptw_ipcw_lag))[1]
+cox_result_chart[6, 'upper_ci'] <- exp(confint(cox_at_iptw_ipcw_lag))[2]
 
-result_chart[7, 'estimate'] <- exp(at_ipcw_nl_model$coef)
-result_chart[7, 'lower_ci'] <- exp(confint(at_ipcw_nl_model))[1]
-result_chart[7, 'upper_ci'] <- exp(confint(at_ipcw_nl_model))[2]
+cox_result_chart[7, 'estimate'] <- exp(cox_at_ipcw_nonlag$coef)
+cox_result_chart[7, 'lower_ci'] <- exp(confint(cox_at_ipcw_nonlag))[1]
+cox_result_chart[7, 'upper_ci'] <- exp(confint(cox_at_ipcw_nonlag))[2]
 
-result_chart[8, 'estimate'] <- exp(at_ipcw_nl_iptw_model$coef)
-result_chart[8, 'lower_ci'] <- exp(confint(at_ipcw_nl_iptw_model))[1]
-result_chart[8, 'upper_ci'] <- exp(confint(at_ipcw_nl_iptw_model))[2]
+cox_result_chart[8, 'estimate'] <- exp(cox_at_iptw_ipcw_nonlag$coef)
+cox_result_chart[8, 'lower_ci'] <- exp(confint(cox_at_iptw_ipcw_nonlag))[1]
+cox_result_chart[8, 'upper_ci'] <- exp(confint(cox_at_iptw_ipcw_nonlag))[2]
 
-result_chart[9, 'estimate'] <- exp(at_ipcw_pooled_model$coef)
-result_chart[9, 'lower_ci'] <- exp(confint(at_ipcw_pooled_model))[1]
-result_chart[9, 'upper_ci'] <- exp(confint(at_ipcw_pooled_model))[2]
+cox_result_chart[9, 'estimate'] <- exp(cox_at_ipcw_pool$coef)
+cox_result_chart[9, 'lower_ci'] <- exp(confint(cox_at_ipcw_pool))[1]
+cox_result_chart[9, 'upper_ci'] <- exp(confint(cox_at_ipcw_pool))[2]
 
-result_chart[10, 'estimate'] <- exp(at_ipcw_pooled_iptw_model$coef)
-result_chart[10, 'lower_ci'] <- exp(confint(at_ipcw_pooled_iptw_model))[1]
-result_chart[10, 'upper_ci'] <- exp(confint(at_ipcw_pooled_iptw_model))[2]
+cox_result_chart[10, 'estimate'] <- exp(cox_at_iptw_ipcw_pool$coef)
+cox_result_chart[10, 'lower_ci'] <- exp(confint(cox_at_iptw_ipcw_pool))[1]
+cox_result_chart[10, 'upper_ci'] <- exp(confint(cox_at_iptw_ipcw_pool))[2]
 
-result_chart[11, 'estimate'] <- exp(at_ipcw_nl_mod_model$coef)
-result_chart[11, 'lower_ci'] <- exp(confint(at_ipcw_nl_mod_model))[1]
-result_chart[11, 'upper_ci'] <- exp(confint(at_ipcw_nl_mod_model))[2]
+cox_result_chart[11, 'estimate'] <- exp(cox_at_ipcw_mod$coef)
+cox_result_chart[11, 'lower_ci'] <- exp(confint(cox_at_ipcw_mod))[1]
+cox_result_chart[11, 'upper_ci'] <- exp(confint(cox_at_ipcw_mod))[2]
 
-result_chart[12, 'estimate'] <- exp(at_ipcw_nl_mod_iptw_model$coef)
-result_chart[12, 'lower_ci'] <- exp(confint(at_ipcw_nl_mod_iptw_model))[1]
-result_chart[12, 'upper_ci'] <- exp(confint(at_ipcw_nl_mod_iptw_model))[2]
+cox_result_chart[12, 'estimate'] <- exp(cox_at_iptw_ipcw_mod$coef)
+cox_result_chart[12, 'lower_ci'] <- exp(confint(cox_at_iptw_ipcw_mod))[1]
+cox_result_chart[12, 'upper_ci'] <- exp(confint(cox_at_iptw_ipcw_mod))[2]
 
-result_chart <- cbind(model = row.names(result_chart), result_chart, row.names = NULL)
-write_xlsx(result_chart, paste(path_results, 'cox_ratios_unstab.xlsx', sep ='/'))
+cox_result_chart <- cbind(model = row.names(cox_result_chart), cox_result_chart, row.names = NULL)
+write_xlsx(cox_result_chart, paste(path_results, 'cox_ratios_unstab.xlsx', sep ='/'))
 
-summary_cox_results <- result_chart[c(2,4,6,8,10,12),]
-summary_cox_results$model <- factor(summary_cox_results$model, levels = rev(summary_cox_results$model))
-
-model_order <- rev(c("ITT (IPTW)", "AT (IPTW)", "AT (lagged sIPCW + IPTW)", "AT (non-lagged IPCW + IPTW)", "AT (pooled IPCW + sIPTW)", "AT (mod non-lagged IPCW + IPTW)"))
+summary_cox_results <- cox_result_chart[c(2,4,6,8,10,12),]
+model_order <- rev(c("ITT (IPTW)", "AT (IPTW)", "AT (IPTW + lagged IPCW)", "AT (IPTW + non-lagged IPCW)", 
+                     "AT (IPTW + pooled IPCW)", "AT (IPTW + modified non-lagged IPCW)"))
 summary_cox_results$model <- factor(summary_cox_results$model, levels = model_order)
 model_colors <- rev(c('#f56864','#6a00a8', '#9a00b1', '#d53e4f', '#f9a463', '#f9c43d'))
 
@@ -1186,6 +1268,14 @@ y_labels <- rev(paste(
   sep = ''
 ))
 
+# in case some values are exactly the same for labeling:
+# y_labels <- rev(paste(
+#   c(round(summary_cox_results$estimate, 3)),
+#   ' (',round(summary_cox_results$lower_ci, 3),', ',
+#   round(summary_cox_results$upper_ci, 3), ')',
+#   sep = ''
+# ))
+
 y_labels
 
 dummy_data <- data.frame(
@@ -1213,10 +1303,311 @@ p2
 combined_plot <- plot_grid(p, p2, ncol = 2, rel_widths = c(3, 1))
 combined_plot
 
-ggsave("forest_plot_unstab.png", plot = combined_plot, width = 6, height = 3, units = "in", bg = 'white')
+ggsave("forest_plot_HR_unstab.png", plot = combined_plot, width = 6, height = 3, units = "in", bg = 'white')
 
 dev.off()
 
 
+#### CENSORING DISTRIBUTION ####
 
+cohort <- readRDS(file = paste(path_cohort, 'antidepressant_cohort_iptw.rds', sep = '/'))
+times_dec <- readRDS(paste(path_main, 'times_dec.rds', sep = '/'))
+
+cens_cohort <- cohort %>% 
+  filter(censor == 1) %>% 
+  mutate(censor_time = as.numeric(censor_date - entry_date)) %>% 
+  select(id, trt_dummy, censor_time, censor) %>% 
+  arrange(censor_time)
+
+data_d1 <- subset(cens_cohort, censor_time < times_dec[[1]])
+data_d2 <- subset(cens_cohort, censor_time >= times_dec[[1]] & censor_time < times_dec[[2]])
+data_d3 <- subset(cens_cohort, censor_time >= times_dec[[2]] & censor_time < times_dec[[3]])
+data_d4 <- subset(cens_cohort, censor_time >= times_dec[[3]] & censor_time < times_dec[[4]])
+data_d5 <- subset(cens_cohort, censor_time >= times_dec[[4]] & censor_time < times_dec[[5]])
+data_d6 <- subset(cens_cohort, censor_time >= times_dec[[5]] & censor_time < times_dec[[6]])
+data_d7 <- subset(cens_cohort, censor_time >= times_dec[[6]] & censor_time < times_dec[[7]])
+data_d8 <- subset(cens_cohort, censor_time >= times_dec[[7]] & censor_time < times_dec[[8]])
+data_d9 <- subset(cens_cohort, censor_time >= times_dec[[8]] & censor_time < times_dec[[9]])
+data_d10 <- subset(cens_cohort, censor_time >= times_dec[[9]])
+
+cens_overall <- cens_cohort %>% 
+  group_by(censor_time) %>% 
+  summarize (count = n())
+
+cens_d1 <- data_d1 %>% 
+  group_by(censor_time) %>% 
+  summarize (count = n())
+
+cens_d2 <- data_d2 %>% 
+  group_by(censor_time) %>% 
+  summarize (count = n())
+
+cens_d3 <- data_d3 %>% 
+  group_by(censor_time) %>% 
+  summarize (count = n())
+
+cens_d4 <- data_d4 %>% 
+  group_by(censor_time) %>% 
+  summarize (count = n())
+
+cens_d5 <- data_d5 %>% 
+  group_by(censor_time) %>% 
+  summarize (count = n())
+
+cens_d6 <- data_d6 %>% 
+  group_by(censor_time) %>% 
+  summarize (count = n())
+
+cens_d7 <- data_d7 %>% 
+  group_by(censor_time) %>% 
+  summarize (count = n())
+
+cens_d8 <- data_d8 %>% 
+  group_by(censor_time) %>% 
+  summarize (count = n())
+
+cens_d9 <- data_d9 %>% 
+  group_by(censor_time) %>% 
+  summarize (count = n())
+
+cens_d10 <- data_d10 %>% 
+  group_by(censor_time) %>% 
+  summarize (count = n())
+
+plot_censoring_distribution <- function(data, x_var, y_var, title) {
+  ggplot(data, aes(x = {{ x_var }}, y = {{ y_var }})) +
+    geom_line(color = "#6a00a8", linewidth = 0.5) +
+    labs(x = "time", y = "number of people censored", title = title) +
+    theme_minimal() +
+    theme(
+      axis.text.x = element_text(size = 8, angle = 45, vjust = 1, hjust = 1),
+      axis.text.y = element_text(size = 8),
+      axis.title.x = element_text(size = 10, face = 'bold'),
+      axis.title.y = element_text(size = 10, face = 'bold'),
+      plot.title = element_text(size = 12, face = "bold", hjust = 0.5),
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      axis.line = element_line(color = "black"),
+      legend.position = "bottom",
+      legend.title = element_text(size = 8, face = 'bold'),
+      legend.text = element_text(size = 8),
+      legend.box.margin = margin(0, 0, 0, 0)
+    )
+}
+
+censor_d1 <- plot_censoring_distribution(cens_d1, censor_time, count, "Censoring Distribution in Decile 1")
+ggsave("censor_dist_d1.png", plot = censor_d1, width = 4, height = 4, units = "in", bg = 'white')
+
+censor_d2 <- plot_censoring_distribution(cens_d2, censor_time, count, "Censoring Distribution in Decile 2")
+ggsave("censor_dist_d2.png", plot = censor_d2, width = 4, height = 4, units = "in", bg = 'white')
+
+censor_d3 <- plot_censoring_distribution(cens_d3, censor_time, count, "Censoring Distribution in Decile 3")
+ggsave("censor_dist_d3.png", plot = censor_d3, width = 4, height = 4, units = "in", bg = 'white')
+
+censor_d4 <- plot_censoring_distribution(cens_d4, censor_time, count, "Censoring Distribution in Decile 4")
+ggsave("censor_dist_d4.png", plot = censor_d4, width = 4, height = 4, units = "in", bg = 'white')
+
+censor_d5 <- plot_censoring_distribution(cens_d5, censor_time, count, "Censoring Distribution in Decile 5")
+ggsave("censor_dist_d5.png", plot = censor_d5, width = 4, height = 4, units = "in", bg = 'white')
+
+censor_d6 <- plot_censoring_distribution(cens_d6, censor_time, count, "Censoring Distribution in Decile 6")
+ggsave("censor_dist_d6.png", plot = censor_d6, width = 4, height = 4, units = "in", bg = 'white')
+
+censor_d7 <- plot_censoring_distribution(cens_d7, censor_time, count, "Censoring Distribution in Decile 7")
+ggsave("censor_dist_d7.png", plot = censor_d7, width = 4, height = 4, units = "in", bg = 'white')
+
+censor_d8 <- plot_censoring_distribution(cens_d8, censor_time, count, "Censoring Distribution in Decile 8")
+ggsave("censor_dist_d8.png", plot = censor_d8, width = 4, height = 4, units = "in", bg = 'white')
+
+censor_d9 <- plot_censoring_distribution(cens_d9, censor_time, count, "Censoring Distribution in Decile 9")
+ggsave("censor_dist_d9.png", plot = censor_d9, width = 4, height = 4, units = "in", bg = 'white')
+
+censor_d10 <- plot_censoring_distribution(cens_d10, censor_time, count, "Censoring Distribution in Decile 10")
+ggsave("censor_dist_d10.png", plot = censor_d10, width = 4, height = 4, units = "in", bg = 'white')
+
+#### INCIDENCE RATE RATIOS ####
+
+# Unstabilized
+
+incidence_rates <- readRDS(paste(path_results, 'incidence_rates_ci_fx.rds', sep ='/'))
+incidence_rates_chart <- incidence_rates[c(2,4,6,8,10,12),]
+incidence_rates_chart %<>% select(-variable)
+
+rownames(incidence_rates_chart) <- c(
+  'ITT (IPTW)',
+  'AT (IPTW)',
+  'AT (IPTW + lagged IPCW)',
+  'AT (IPTW + non-lagged IPCW)',
+  'AT (IPTW + pooled IPCW)',
+  'AT (IPTW + modified non-lagged IPCW)'
+)
+
+incidence_rates_chart <- cbind(model = row.names(incidence_rates_chart), incidence_rates_chart, row.names = NULL)
+model_order <- rev(c("ITT (IPTW)", "AT (IPTW)", "AT (IPTW + lagged IPCW)", "AT (IPTW + non-lagged IPCW)", 
+                     "AT (IPTW + pooled IPCW)", "AT (IPTW + modified non-lagged IPCW)"))
+
+incidence_rates_chart$model <- factor(incidence_rates_chart$model, levels = model_order)
+model_colors <- rev(c('#f56864','#6a00a8', '#9a00b1', '#d53e4f', '#f9a463', '#f9c43d'))
+
+p <- ggplot(incidence_rates_chart, aes(x = estimate, y = model, color = model)) +
+  geom_point(size = 3) + 
+  geom_errorbarh(aes(xmin = lower_ci, xmax = upper_ci), height = 0.2) +  
+  geom_vline(xintercept = 1, linetype = "dashed", color = "black") + 
+  theme_minimal() +  
+  labs(x = "estimate (95% CI)", y = "model", title = "Forest Plot of Incidence Rate Ratios by Model") +  
+  scale_color_manual(values = model_colors) +  
+  theme(
+    axis.text.y = element_text(size = 8), 
+    axis.ticks.y = element_blank(),
+    axis.title.y = element_blank(),
+    axis.text.x = element_text(size = 8),
+    axis.ticks.x = element_blank(),
+    axis.title.x = element_text(size = 8, face = "bold"),
+    plot.title = element_text(size = 10, face = "bold", hjust = 0.5),
+    legend.position = "none", 
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_blank(),
+    plot.margin = margin(25, 0, 25, 0) 
+  )
+
+p
+
+# y_labels <- rev(paste(
+#   c(round(incidence_rates_chart$estimate, 2)),
+#   ' (',round(incidence_rates_chart$lower_ci, 2),', ',
+#   round(incidence_rates_chart$upper_ci, 2), ')',
+#   sep = ''
+# ))
+
+# in case some values are exactly the same for labeling:
+y_labels <- rev(paste(
+  c(round(incidence_rates_chart$estimate, 3)),
+  ' (',round(incidence_rates_chart$lower_ci, 3),', ',
+  round(incidence_rates_chart$upper_ci, 3), ')',
+  sep = ''
+))
+
+y_labels
+
+dummy_data <- data.frame(
+  model = factor(y_labels, levels = y_labels),
+  dummy = 1 
+)
+
+p2 <- ggplot(dummy_data, aes(x = dummy, y = model)) +
+  scale_y_discrete(labels = y_labels) +
+  theme_void() +
+  theme(
+    axis.text.y = element_text(size = 8),
+    axis.title.y = element_blank(),
+    axis.line.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    axis.text.x = element_blank(),
+    axis.title.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    plot.margin = margin(40, 0, 50, 10),
+    legend.position = "none" 
+  )
+
+p2
+
+combined_plot <- plot_grid(p, p2, ncol = 2, rel_widths = c(3, 1))
+combined_plot
+
+ggsave("forest_plot_IRR_unstab.png", plot = combined_plot, width = 6, height = 3, units = "in", bg = 'white')
+
+dev.off()
+
+# Stabilized
+
+incidence_rates <- readRDS(paste(path_results, 'incidence_rates_ci_fx.rds', sep ='/'))
+incidence_rates_chart <- incidence_rates[c(25,26,28,30,32,34),]
+incidence_rates_chart %<>% select(-variable)
+
+rownames(incidence_rates_chart) <- c(
+  'ITT (sIPTW)',
+  'AT (sIPTW)',
+  'AT (sIPTW + lagged sIPCW)',
+  'AT (sIPTW + non-lagged sIPCW)',
+  'AT (sIPTW + pooled sIPCW)',
+  'AT (sIPTW + modified non-lagged sIPCW)'
+)
+
+incidence_rates_chart <- cbind(model = row.names(incidence_rates_chart), incidence_rates_chart, row.names = NULL)
+model_order <- rev(c("ITT (sIPTW)", "AT (sIPTW)", "AT (sIPTW + lagged sIPCW)", "AT (sIPTW + non-lagged sIPCW)", 
+                     "AT (sIPTW + pooled sIPCW)", "AT (sIPTW + modified non-lagged sIPCW)"))
+
+incidence_rates_chart$model <- factor(incidence_rates_chart$model, levels = model_order)
+model_colors <- rev(c('#f56864','#6a00a8', '#9a00b1', '#d53e4f', '#f9a463', '#f9c43d'))
+
+p <- ggplot(incidence_rates_chart, aes(x = estimate, y = model, color = model)) +
+  geom_point(size = 3) + 
+  geom_errorbarh(aes(xmin = lower_ci, xmax = upper_ci), height = 0.2) +  
+  geom_vline(xintercept = 1, linetype = "dashed", color = "black") + 
+  theme_minimal() +  
+  labs(x = "estimate (95% CI)", y = "model", title = "Forest Plot of Incidence Rate Ratios by Model") +  
+  scale_color_manual(values = model_colors) +  
+  theme(
+    axis.text.y = element_text(size = 8), 
+    axis.ticks.y = element_blank(),
+    axis.title.y = element_blank(),
+    axis.text.x = element_text(size = 8),
+    axis.ticks.x = element_blank(),
+    axis.title.x = element_text(size = 8, face = "bold"),
+    plot.title = element_text(size = 10, face = "bold", hjust = 0.5),
+    legend.position = "none", 
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_blank(),
+    plot.margin = margin(25, 0, 25, 0) 
+  )
+
+p
+
+# y_labels <- rev(paste(
+#   c(round(incidence_rates_chart$estimate, 2)),
+#   ' (',round(incidence_rates_chart$lower_ci, 2),', ',
+#   round(incidence_rates_chart$upper_ci, 2), ')',
+#   sep = ''
+# ))
+
+# in case some values are exactly the same for labeling:
+y_labels <- rev(paste(
+  c(round(incidence_rates_chart$estimate, 3)),
+  ' (',round(incidence_rates_chart$lower_ci, 3),', ',
+  round(incidence_rates_chart$upper_ci, 3), ')',
+  sep = ''
+))
+
+y_labels
+
+dummy_data <- data.frame(
+  model = factor(y_labels, levels = y_labels),
+  dummy = 1 
+)
+
+p2 <- ggplot(dummy_data, aes(x = dummy, y = model)) +
+  scale_y_discrete(labels = y_labels) +
+  theme_void() +
+  theme(
+    axis.text.y = element_text(size = 8),
+    axis.title.y = element_blank(),
+    axis.line.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    axis.text.x = element_blank(),
+    axis.title.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    plot.margin = margin(40, 0, 50, 10),
+    legend.position = "none" 
+  )
+
+p2
+
+combined_plot <- plot_grid(p, p2, ncol = 2, rel_widths = c(3, 1))
+combined_plot
+
+ggsave("forest_plot_IRR_stab.png", plot = combined_plot, width = 6, height = 3, units = "in", bg = 'white')
+
+dev.off()
 

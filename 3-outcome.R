@@ -29,7 +29,7 @@
 
 # analysis: main, flex_grace_period, or 90_day_grace_period
 
-analysis <- ''
+analysis <- 'flex_grace_period'
 
 #### LOAD PACKAGES ####
 
@@ -51,17 +51,18 @@ study_follow_up_end = ymd(20240331)
 
 if (analysis == 'main' | analysis == '') {
   path_cohort <- "Z:/EPI/Protocol 24_004042/Gwen/data/cohort/main" 
-} else if (analyses == 'flex_grace_period') {
+} else if (analysis == 'flex_grace_period') {
   path_cohort <- "Z:/EPI/Protocol 24_004042/Gwen/data/cohort/sensitivity/flex_grace_period" 
-} else if (analyses == '90_day_grace_period') {
+} else if (analysis == '90_day_grace_period') {
   path_cohort <- "Z:/EPI/Protocol 24_004042/Gwen/data/cohort/sensitivity/90_day_grace_period" 
 } 
 
+path_main <- "Z:/EPI/Protocol 24_004042/Gwen/data/cohort/main" 
 path_linkage_1 <- 'Z:/EPI/Protocol 24_004042/Data linkage/Results/Aurum_linked/Final_pt1'
 path_linkage_2 <- 'Z:/EPI/Protocol 24_004042/Data linkage/Results/Aurum_linked/Final_pt2'
 
 cohort <- readRDS(file = paste(path_cohort, 'antidepressant_cohort_censored.rds', sep = '/'))
-switched_to <- readRDS(file = paste(path_cohort, 'switched_to.rds', sep = '/'))
+switched_to <- readRDS(file = paste(path_main, 'switched_to.rds', sep = '/'))
 
 setwd(path_cohort)
 
@@ -109,7 +110,8 @@ cat(paste('Missing ONS dod with EMIS or CPRD dod:', length(which(dod_match$no_on
 cohort$dod <- pmin(
   cohort$emis_dod,
   cohort$cprd_dod,
-  cohort$ons_dod
+  cohort$ons_dod,
+  na.rm = TRUE
 )
 
 # remove patients with issues in dod encoding
