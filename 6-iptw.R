@@ -21,7 +21,7 @@
 # male, female, young, old, 2019, 2020, 2021, 2022
 # depressed, not_depressed
 
-analysis <- '2022'
+analysis <- ''
 
 #### LOAD PACKAGES ####
 

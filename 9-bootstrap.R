@@ -85,7 +85,7 @@ cohort <- readRDS(file = paste(path_cohort, 'antidepressant_cohort_covariates.rd
 covariates <- readRDS(file = paste(path_main, 'covariates.rds', sep = '/'))
 comorbidities <- readRDS(file = paste(path_main, 'comorbidities.rds', sep = '/'))
 
-times_dec <- readRDS(paste(path_main, 'times_dec.rds', sep = '/'))
+times_dec <- readRDS(paste(path_cohort, 'times_dec.rds', sep = '/'))
 times_dec <- times_dec[1:9] 
 times_dec
 
@@ -267,18 +267,6 @@ bs <- function(data, indices) {
     sipcw_mod = fifelse(dec == 1, 1, sipcw_nonlag)
   )]
   
-  ## Truncate to 50
-  d_long[, `:=`(
-    ipcw_lag = pmin(ipcw_lag, 50),
-    sipcw_lag = pmin(sipcw_lag, 50),
-    sipcw_nonlag = pmin(sipcw_nonlag, 50),
-    ipcw_nonlag = pmin(ipcw_nonlag, 50),
-    ipcw_pool = pmin(ipcw_pool, 50),
-    sipcw_pool = pmin(sipcw_pool, 50),
-    ipcw_mod = pmin(ipcw_mod, 50),
-    sipcw_mod = pmin(sipcw_mod, 50)
-  )]
-  
   gc()
   
   #### 3. CALCULATE INCIDENCE RATES ####
@@ -342,14 +330,14 @@ bs <- function(data, indices) {
   )]
   
   ir_itt_iptw <- ir_itt_iptw[, .(
-    IR = unique(IR),
-    IR_ref = unique(IR_ref),
-    IR_comp = unique(IR_comp),
+    IR = IR,
+    IR_ref = IR_ref,
+    IR_comp = IR_comp,
     IRR = IR_comp / IR_ref,
     IRD = IR_comp - IR_ref,
-    IR_stab = unique(IR_stab),
-    IR_ref_stab = unique(IR_ref_stab),
-    IR_comp_stab = unique(IR_comp_stab),
+    IR_stab = IR_stab,
+    IR_ref_stab = IR_ref_stab,
+    IR_comp_stab = IR_comp_stab,
     IRR_stab = IR_comp_stab / IR_ref_stab,
     IRD_stab = IR_comp_stab - IR_ref_stab
   )]
@@ -404,14 +392,14 @@ bs <- function(data, indices) {
   ), by = month_year]
   
   ir_itt_iptw_time[, `:=`(
-    IR = unique(IR),
-    IR_ref = unique(IR_ref),
-    IR_comp = unique(IR_comp),
+    IR = IR,
+    IR_ref = IR_ref,
+    IR_comp = IR_comp,
     IRR = IR_comp / IR_ref,
     IRD = IR_comp - IR_ref,
-    IR_stab = unique(IR_stab),
-    IR_ref_stab = unique(IR_ref_stab),
-    IR_comp_stab = unique(IR_comp_stab),
+    IR_stab = IR_stab,
+    IR_ref_stab = IR_ref_stab,
+    IR_comp_stab = IR_comp_stab,
     IRR_stab = IR_comp_stab / IR_ref_stab,
     IRD_stab = IR_comp_stab - IR_ref_stab
   )]
@@ -571,14 +559,14 @@ bs <- function(data, indices) {
   )]
   
   ir_at_iptw[, `:=` (
-    IR = unique(IR),
-    IR_ref = unique(IR_ref),
-    IR_comp = unique(IR_comp),
+    IR = IR,
+    IR_ref = IR_ref,
+    IR_comp = IR_comp,
     IRR = IR_comp / IR_ref,
     IRD = IR_comp - IR_ref,
-    IR_stab = unique(IR_stab),
-    IR_ref_stab = unique(IR_ref_stab),
-    IR_comp_stab = unique(IR_comp_stab),
+    IR_stab = IR_stab,
+    IR_ref_stab = IR_ref_stab,
+    IR_comp_stab = IR_comp_stab,
     IRR_stab = IR_comp_stab / IR_ref_stab,
     IRD_stab = IR_comp_stab - IR_ref_stab
   )]
@@ -602,14 +590,14 @@ bs <- function(data, indices) {
   )]
   
   ir_at_ipcw_lag[, `:=` (
-    IR = unique(IR),
-    IR_ref = unique(IR_ref),
-    IR_comp = unique(IR_comp),
+    IR = IR,
+    IR_ref = IR_ref,
+    IR_comp = IR_comp,
     IRR = IR_comp / IR_ref,
     IRD = IR_comp - IR_ref,
-    IR_stab = unique(IR_stab),
-    IR_ref_stab = unique(IR_ref_stab),
-    IR_comp_stab = unique(IR_comp_stab),
+    IR_stab = IR_stab,
+    IR_ref_stab = IR_ref_stab,
+    IR_comp_stab = IR_comp_stab,
     IRR_stab = IR_comp_stab / IR_ref_stab,
     IRD_stab = IR_comp_stab - IR_ref_stab
   )]
@@ -632,14 +620,14 @@ bs <- function(data, indices) {
   )]
   
   ir_at_iptw_ipcw_lag[, `:=` (
-    IR = unique(IR),
-    IR_ref = unique(IR_ref),
-    IR_comp = unique(IR_comp),
+    IR = IR,
+    IR_ref = IR_ref,
+    IR_comp = IR_comp,
     IRR = IR_comp / IR_ref,
     IRD = IR_comp - IR_ref,
-    IR_stab = unique(IR_stab),
-    IR_ref_stab = unique(IR_ref_stab),
-    IR_comp_stab = unique(IR_comp_stab),
+    IR_stab = IR_stab,
+    IR_ref_stab = IR_ref_stab,
+    IR_comp_stab = IR_comp_stab,
     IRR_stab = IR_comp_stab / IR_ref_stab,
     IRD_stab = IR_comp_stab - IR_ref_stab
   )]
@@ -663,14 +651,14 @@ bs <- function(data, indices) {
   )]
   
   ir_at_ipcw_nonlag[, `:=` (
-    IR = unique(IR),
-    IR_ref = unique(IR_ref),
-    IR_comp = unique(IR_comp),
+    IR = IR,
+    IR_ref = IR_ref,
+    IR_comp = IR_comp,
     IRR = IR_comp / IR_ref,
     IRD = IR_comp - IR_ref,
-    IR_stab = unique(IR_stab),
-    IR_ref_stab = unique(IR_ref_stab),
-    IR_comp_stab = unique(IR_comp_stab),
+    IR_stab = IR_stab,
+    IR_ref_stab = IR_ref_stab,
+    IR_comp_stab = IR_comp_stab,
     IRR_stab = IR_comp_stab / IR_ref_stab,
     IRD_stab = IR_comp_stab - IR_ref_stab
   )]
@@ -693,14 +681,14 @@ bs <- function(data, indices) {
   )]
   
   ir_at_iptw_ipcw_nonlag[, `:=` (
-    IR = unique(IR),
-    IR_ref = unique(IR_ref),
-    IR_comp = unique(IR_comp),
+    IR = IR,
+    IR_ref = IR_ref,
+    IR_comp = IR_comp,
     IRR = IR_comp / IR_ref,
     IRD = IR_comp - IR_ref,
-    IR_stab = unique(IR_stab),
-    IR_ref_stab = unique(IR_ref_stab),
-    IR_comp_stab = unique(IR_comp_stab),
+    IR_stab = IR_stab,
+    IR_ref_stab = IR_ref_stab,
+    IR_comp_stab = IR_comp_stab,
     IRR_stab = IR_comp_stab / IR_ref_stab,
     IRD_stab = IR_comp_stab - IR_ref_stab
   )]
@@ -724,14 +712,14 @@ bs <- function(data, indices) {
   )]
   
   ir_at_ipcw_pool[, `:=` (
-    IR = unique(IR),
-    IR_ref = unique(IR_ref),
-    IR_comp = unique(IR_comp),
+    IR = IR,
+    IR_ref = IR_ref,
+    IR_comp = IR_comp,
     IRR = IR_comp / IR_ref,
     IRD = IR_comp - IR_ref,
-    IR_stab = unique(IR_stab),
-    IR_ref_stab = unique(IR_ref_stab),
-    IR_comp_stab = unique(IR_comp_stab),
+    IR_stab = IR_stab,
+    IR_ref_stab = IR_ref_stab,
+    IR_comp_stab = IR_comp_stab,
     IRR_stab = IR_comp_stab / IR_ref_stab,
     IRD_stab = IR_comp_stab - IR_ref_stab
   )]
@@ -754,14 +742,14 @@ bs <- function(data, indices) {
   )]
   
   ir_at_iptw_ipcw_pool[, `:=` (
-    IR = unique(IR),
-    IR_ref = unique(IR_ref),
-    IR_comp = unique(IR_comp),
+    IR = IR,
+    IR_ref = IR_ref,
+    IR_comp = IR_comp,
     IRR = IR_comp / IR_ref,
     IRD = IR_comp - IR_ref,
-    IR_stab = unique(IR_stab),
-    IR_ref_stab = unique(IR_ref_stab),
-    IR_comp_stab = unique(IR_comp_stab),
+    IR_stab = IR_stab,
+    IR_ref_stab = IR_ref_stab,
+    IR_comp_stab = IR_comp_stab,
     IRR_stab = IR_comp_stab / IR_ref_stab,
     IRD_stab = IR_comp_stab - IR_ref_stab
   )]
@@ -785,14 +773,14 @@ bs <- function(data, indices) {
   )]
   
   ir_at_ipcw_mod[, `:=` (
-    IR = unique(IR),
-    IR_ref = unique(IR_ref),
-    IR_comp = unique(IR_comp),
+    IR = IR,
+    IR_ref = IR_ref,
+    IR_comp = IR_comp,
     IRR = IR_comp / IR_ref,
     IRD = IR_comp - IR_ref,
-    IR_stab = unique(IR_stab),
-    IR_ref_stab = unique(IR_ref_stab),
-    IR_comp_stab = unique(IR_comp_stab),
+    IR_stab = IR_stab,
+    IR_ref_stab = IR_ref_stab,
+    IR_comp_stab = IR_comp_stab,
     IRR_stab = IR_comp_stab / IR_ref_stab,
     IRD_stab = IR_comp_stab - IR_ref_stab
   )]
@@ -815,14 +803,14 @@ bs <- function(data, indices) {
   )]
   
   ir_at_iptw_ipcw_mod[, `:=` (
-    IR = unique(IR),
-    IR_ref = unique(IR_ref),
-    IR_comp = unique(IR_comp),
+    IR = IR,
+    IR_ref = IR_ref,
+    IR_comp = IR_comp,
     IRR = IR_comp / IR_ref,
     IRD = IR_comp - IR_ref,
-    IR_stab = unique(IR_stab),
-    IR_ref_stab = unique(IR_ref_stab),
-    IR_comp_stab = unique(IR_comp_stab),
+    IR_stab = IR_stab,
+    IR_ref_stab = IR_ref_stab,
+    IR_comp_stab = IR_comp_stab,
     IRR_stab = IR_comp_stab / IR_ref_stab,
     IRD_stab = IR_comp_stab - IR_ref_stab
   )]
@@ -877,14 +865,14 @@ bs <- function(data, indices) {
   ), by = month_year]
   
   ir_at_iptw_time[, `:=`(
-    IR = unique(IR),
-    IR_ref = unique(IR_ref),
-    IR_comp = unique(IR_comp),
+    IR = IR,
+    IR_ref = IR_ref,
+    IR_comp = IR_comp,
     IRR = IR_comp / IR_ref,
     IRD = IR_comp - IR_ref,
-    IR_stab = unique(IR_stab),
-    IR_ref_stab = unique(IR_ref_stab),
-    IR_comp_stab = unique(IR_comp_stab),
+    IR_stab = IR_stab,
+    IR_ref_stab = IR_ref_stab,
+    IR_comp_stab = IR_comp_stab,
     IRR_stab = IR_comp_stab / IR_ref_stab,
     IRD_stab = IR_comp_stab - IR_ref_stab
   )]
@@ -910,14 +898,14 @@ bs <- function(data, indices) {
   ), by = month_year]
   
   ir_at_ipcw_lag_time[, `:=`(
-    IR = unique(IR),
-    IR_ref = unique(IR_ref),
-    IR_comp = unique(IR_comp),
+    IR = IR,
+    IR_ref = IR_ref,
+    IR_comp = IR_comp,
     IRR = IR_comp / IR_ref,
     IRD = IR_comp - IR_ref,
-    IR_stab = unique(IR_stab),
-    IR_ref_stab = unique(IR_ref_stab),
-    IR_comp_stab = unique(IR_comp_stab),
+    IR_stab = IR_stab,
+    IR_ref_stab = IR_ref_stab,
+    IR_comp_stab = IR_comp_stab,
     IRR_stab = IR_comp_stab / IR_ref_stab,
     IRD_stab = IR_comp_stab - IR_ref_stab
   )]
@@ -942,14 +930,14 @@ bs <- function(data, indices) {
   ), by = month_year]
   
   ir_at_iptw_ipcw_lag_time[, `:=`(
-    IR = unique(IR),
-    IR_ref = unique(IR_ref),
-    IR_comp = unique(IR_comp),
+    IR = IR,
+    IR_ref = IR_ref,
+    IR_comp = IR_comp,
     IRR = IR_comp / IR_ref,
     IRD = IR_comp - IR_ref,
-    IR_stab = unique(IR_stab),
-    IR_ref_stab = unique(IR_ref_stab),
-    IR_comp_stab = unique(IR_comp_stab),
+    IR_stab = IR_stab,
+    IR_ref_stab = IR_ref_stab,
+    IR_comp_stab = IR_comp_stab,
     IRR_stab = IR_comp_stab / IR_ref_stab,
     IRD_stab = IR_comp_stab - IR_ref_stab
   )]
@@ -975,14 +963,14 @@ bs <- function(data, indices) {
   ), by = month_year]
   
   ir_at_ipcw_nonlag_time[, `:=`(
-    IR = unique(IR),
-    IR_ref = unique(IR_ref),
-    IR_comp = unique(IR_comp),
+    IR = IR,
+    IR_ref = IR_ref,
+    IR_comp = IR_comp,
     IRR = IR_comp / IR_ref,
     IRD = IR_comp - IR_ref,
-    IR_stab = unique(IR_stab),
-    IR_ref_stab = unique(IR_ref_stab),
-    IR_comp_stab = unique(IR_comp_stab),
+    IR_stab = IR_stab,
+    IR_ref_stab = IR_ref_stab,
+    IR_comp_stab = IR_comp_stab,
     IRR_stab = IR_comp_stab / IR_ref_stab,
     IRD_stab = IR_comp_stab - IR_ref_stab
   )]
@@ -1007,14 +995,14 @@ bs <- function(data, indices) {
   ), by = month_year]
   
   ir_at_iptw_ipcw_nonlag_time[, `:=`(
-    IR = unique(IR),
-    IR_ref = unique(IR_ref),
-    IR_comp = unique(IR_comp),
+    IR = IR,
+    IR_ref = IR_ref,
+    IR_comp = IR_comp,
     IRR = IR_comp / IR_ref,
     IRD = IR_comp - IR_ref,
-    IR_stab = unique(IR_stab),
-    IR_ref_stab = unique(IR_ref_stab),
-    IR_comp_stab = unique(IR_comp_stab),
+    IR_stab = IR_stab,
+    IR_ref_stab = IR_ref_stab,
+    IR_comp_stab = IR_comp_stab,
     IRR_stab = IR_comp_stab / IR_ref_stab,
     IRD_stab = IR_comp_stab - IR_ref_stab
   )]
@@ -1040,14 +1028,14 @@ bs <- function(data, indices) {
   ), by = month_year]
   
   ir_at_ipcw_pool_time[, `:=`(
-    IR = unique(IR),
-    IR_ref = unique(IR_ref),
-    IR_comp = unique(IR_comp),
+    IR = IR,
+    IR_ref = IR_ref,
+    IR_comp = IR_comp,
     IRR = IR_comp / IR_ref,
     IRD = IR_comp - IR_ref,
-    IR_stab = unique(IR_stab),
-    IR_ref_stab = unique(IR_ref_stab),
-    IR_comp_stab = unique(IR_comp_stab),
+    IR_stab = IR_stab,
+    IR_ref_stab = IR_ref_stab,
+    IR_comp_stab = IR_comp_stab,
     IRR_stab = IR_comp_stab / IR_ref_stab,
     IRD_stab = IR_comp_stab - IR_ref_stab
   )]
@@ -1072,14 +1060,14 @@ bs <- function(data, indices) {
   ), by = month_year]
   
   ir_at_iptw_ipcw_pool_time[, `:=`(
-    IR = unique(IR),
-    IR_ref = unique(IR_ref),
-    IR_comp = unique(IR_comp),
+    IR = IR,
+    IR_ref = IR_ref,
+    IR_comp = IR_comp,
     IRR = IR_comp / IR_ref,
     IRD = IR_comp - IR_ref,
-    IR_stab = unique(IR_stab),
-    IR_ref_stab = unique(IR_ref_stab),
-    IR_comp_stab = unique(IR_comp_stab),
+    IR_stab = IR_stab,
+    IR_ref_stab = IR_ref_stab,
+    IR_comp_stab = IR_comp_stab,
     IRR_stab = IR_comp_stab / IR_ref_stab,
     IRD_stab = IR_comp_stab - IR_ref_stab
   )]
@@ -1105,14 +1093,14 @@ bs <- function(data, indices) {
   ), by = month_year]
   
   ir_at_ipcw_mod_time[, `:=`(
-    IR = unique(IR),
-    IR_ref = unique(IR_ref),
-    IR_comp = unique(IR_comp),
+    IR = IR,
+    IR_ref = IR_ref,
+    IR_comp = IR_comp,
     IRR = IR_comp / IR_ref,
     IRD = IR_comp - IR_ref,
-    IR_stab = unique(IR_stab),
-    IR_ref_stab = unique(IR_ref_stab),
-    IR_comp_stab = unique(IR_comp_stab),
+    IR_stab = IR_stab,
+    IR_ref_stab = IR_ref_stab,
+    IR_comp_stab = IR_comp_stab,
     IRR_stab = IR_comp_stab / IR_ref_stab,
     IRD_stab = IR_comp_stab - IR_ref_stab
   )]
@@ -1137,14 +1125,14 @@ bs <- function(data, indices) {
   ), by = month_year]
   
   ir_at_iptw_ipcw_mod_time[, `:=`(
-    IR = unique(IR),
-    IR_ref = unique(IR_ref),
-    IR_comp = unique(IR_comp),
+    IR = IR,
+    IR_ref = IR_ref,
+    IR_comp = IR_comp,
     IRR = IR_comp / IR_ref,
     IRD = IR_comp - IR_ref,
-    IR_stab = unique(IR_stab),
-    IR_ref_stab = unique(IR_ref_stab),
-    IR_comp_stab = unique(IR_comp_stab),
+    IR_stab = IR_stab,
+    IR_ref_stab = IR_ref_stab,
+    IR_comp_stab = IR_comp_stab,
     IRR_stab = IR_comp_stab / IR_ref_stab,
     IRD_stab = IR_comp_stab - IR_ref_stab
   )]
@@ -1209,23 +1197,35 @@ bs <- function(data, indices) {
 # new_names <- rep(names, times = 10)
 # new_names <- paste(new_names, endings, sep = '')
 # 
-# saveRDS(new_names, file = paste(path_results, 'result_names.rds', sep = '/'))
+# saveRDS(new_names, file = paste(path_main, 'result_names.rds', sep = '/'))
 
 #### BOOTSTRAP EXECUTION USING BOOT ####
 
 set.seed(1)
-R = 2
+R = 1000
 
-result_names <- readRDS(file = paste(path_results, 'result_names.rds', sep='/'))
+result_names <- readRDS(file = paste(path_main, 'result_names.rds', sep='/'))
 bootstrap_results_manual <- data.frame(matrix(nrow = 1, ncol = length(result_names)))
 names(bootstrap_results_manual) <- result_names
 
-num_cores <- 2
+# run either of (1) or (2)
+# (1) without clusters
+system.time({
+  bootstrap_results_boot <- boot(
+    data = cohort,
+    statistic = bs,
+    R = R,
+    parallel = "snow"
+  )
+})
+
+# (2) with clusters
+num_cores <- 4
 cluster <- makeCluster(num_cores)
 
 clusterExport(cluster, list("bs", "cohort", "comorbidities", "fit_and_predict", "fit_and_predict_base", "fit_and_predict_pooled",
-                      "times_dec", "path_cohort", "path_results", "path_main",
-                      "p_uncens_predictors", "p_uncens_predictors_pooled", "predictors", "bootstrap_results_manual"))
+                      "times_dec", "p_uncens_predictors", "p_uncens_predictors_pooled", "predictors", "bootstrap_results_manual"))
+
 clusterEvalQ(cluster, {
  library(dplyr)
  library(magrittr)
@@ -1247,7 +1247,10 @@ system.time({
  )
  
 })
+
 stopCluster(cluster)
+
+
 
 bootstrap_results_manual <- bootstrap_results_manual[-1,]
 
@@ -1356,79 +1359,79 @@ write_xlsx(summary_results, paste(path_results, 'incidence_rates_ci_fx.xlsx', se
 saveRDS(summary_results, paste(path_results, 'incidence_rates_ci_fx.rds', sep ='/'))
 
 #### BOOTSTRAP EXECUTION USING FUTURE ####
-
-library(doFuture)
-library(foreach)
-
-set.seed(1)
-R <- 2
-
-doFuture::registerDoFuture()
-future::plan(multisession, workers = 2)
-options(future.globals.maxSize= 891289600)
-
-system.time({
-  bootstrap_results_future <- foreach(
-    i = 1:R,
-    .combine = rbind,
-    .options.future = list(
-      packages = c(
-        "dplyr",
-        "magrittr",
-        "survival",
-        "lubridate",
-        "purrr",
-        "data.table",
-        "fastglm"
-      ),
-      seed = TRUE
-    )
-  ) %dofuture% {
-    bs(cohort)
-  }
-})
-
-result_names <- readRDS(file = paste(path_results, 'result_names.rds', sep='/'))
-bootstrap_results_future <- as.data.frame(bootstrap_results_future)
-names(bootstrap_results_future) <- result_names
-saveRDS(bootstrap_results_future, paste(path_results, 'bootstrap_results_future.rds', sep ='/'))
+# 
+# library(doFuture)
+# library(foreach)
+# 
+# set.seed(1)
+# R <- 2
+# 
+# doFuture::registerDoFuture()
+# future::plan(multisession, workers = 2)
+# options(future.globals.maxSize= 891289600)
+# 
+# system.time({
+#   bootstrap_results_future <- foreach(
+#     i = 1:R,
+#     .combine = rbind,
+#     .options.future = list(
+#       packages = c(
+#         "dplyr",
+#         "magrittr",
+#         "survival",
+#         "lubridate",
+#         "purrr",
+#         "data.table",
+#         "fastglm"
+#       ),
+#       seed = TRUE
+#     )
+#   ) %dofuture% {
+#     bs(cohort)
+#   }
+# })
+# 
+# result_names <- readRDS(file = paste(path_results, 'result_names.rds', sep='/'))
+# bootstrap_results_future <- as.data.frame(bootstrap_results_future)
+# names(bootstrap_results_future) <- result_names
+# saveRDS(bootstrap_results_future, paste(path_results, 'bootstrap_results_future.rds', sep ='/'))
 
 #### BUILD BOOTSTRAPPED CIs - USING FUTURE OR MANUAL ####
-
-results <- readRDS(paste(path_results, 'bootstrap_results_manual.rds', sep='/'))
-results <- readRDS(paste(path_results, 'bootstrap_results_future.rds', sep='/'))
-
-bootstrap_ci <- data.frame(matrix(nrow = 0, ncol = 3))
-colnames(bootstrap_ci) <- c('estimate', 'lower_ci', 'upper_ci')
-
-get_stat_ci <- function(stat_name) {
-  
-  stat_ci <- data.frame(
-    estimate = NA,
-    lower_ci = NA,
-    upper_ci = NA
-  )
-  
-  stat_values <- results[stat_name]
-  
-  stat_ci$estimate <- quantile(stat_values, prob = c(0.5), na.rm = TRUE)
-  stat_ci$lower_ci <- quantile(stat_values, prob = c(0.025), na.rm = TRUE)
-  stat_ci$upper_ci <- quantile(stat_values, prob = c(0.975), na.rm = TRUE)
-  
-  rownames(stat_ci)[1] <- stat_name
-  bootstrap_ci <<- rbind(bootstrap_ci, stat_ci)
-  
-}
-
-stat_names <- names(results)
-invisible(lapply(stat_names, get_stat_ci))
-
-bootstrap_ci$variable <- row.names(bootstrap_ci)
-
-bootstrap_ci <- bootstrap_ci %>%
-  select(variable, everything())
-
-saveRDS(bootstrap_ci, file = paste(path_results, 'bootstrap_ci.rds', sep='/'))
+# 
+# results <- readRDS(paste(path_results, 'bootstrap_results_manual.rds', sep='/'))
+# results <- readRDS(paste(path_results, 'bootstrap_results_future.rds', sep='/'))
+# 
+# bootstrap_ci <- data.frame(matrix(nrow = 0, ncol = 3))
+# colnames(bootstrap_ci) <- c('estimate', 'lower_ci', 'upper_ci')
+# 
+# get_stat_ci <- function(stat_name) {
+#   
+#   stat_ci <- data.frame(
+#     estimate = NA,
+#     lower_ci = NA,
+#     upper_ci = NA
+#   )
+#   
+#   stat_values <- results[stat_name]
+#   
+#   stat_ci$estimate <- quantile(stat_values, prob = c(0.5), na.rm = TRUE)
+#   stat_ci$lower_ci <- quantile(stat_values, prob = c(0.025), na.rm = TRUE)
+#   stat_ci$upper_ci <- quantile(stat_values, prob = c(0.975), na.rm = TRUE)
+#   
+#   rownames(stat_ci)[1] <- stat_name
+#   bootstrap_ci <<- rbind(bootstrap_ci, stat_ci)
+#   
+# }
+# 
+# stat_names <- names(results)
+# invisible(lapply(stat_names, get_stat_ci))
+# 
+# bootstrap_ci$variable <- row.names(bootstrap_ci)
+# 
+# bootstrap_ci <- bootstrap_ci %>%
+#   select(variable, everything())
+# 
+# saveRDS(bootstrap_ci, file = paste(path_results, 'bootstrap_ci.rds', sep='/'))
 
 ## Extract CIs for overall IRR 
 
@@ -1436,71 +1439,71 @@ saveRDS(bootstrap_ci, file = paste(path_results, 'bootstrap_ci.rds', sep='/'))
 # middle: nothing (overall) or .y-m (ex: 2019-01)
 # middle: .iptw, .iptw_ipcw
 # end: .IRR, .IRD, .IRR_stab, .IRD_stab
-
-rows_to_keep <- c(
-  ## ITT
-  'itt.IRR',
-  'itt.IRD',
-  'itt.iptw.IRR',
-  'itt.iptw.IRD',
-  'itt.iptw.IRR_stab',
-  'itt.iptw.IRD_stab',
-  'at.IRR',
-  'at.IRD',
-  'at.iptw.IRR',
-  'at.iptw.IRD',
-  'at.iptw.IRR_stab',
-  'at.iptw.IRD_stab',
-  
-  ## AT
-  # lagged weights
-  'at.ipcw_lag.IRR',
-  'at.ipcw_lag.IRD',
-  'at.ipcw_lag.IRR_stab',
-  'at.ipcw_lag.IRD_stab',
-  'at.iptw.ipcw_lag.IRR',
-  'at.iptw.ipcw_lag.IRD',
-  'at.iptw.ipcw_lag.IRR_stab',
-  'at.iptw.ipcw_lag.IRD_stab',
-  
-  # non-lagged weights
-  'at.ipcw_nonlag.IRR',
-  'at.ipcw_nonlag.IRD',
-  'at.ipcw_nonlag.IRR_stab',
-  'at.ipcw_nonlag.IRD_stab',
-  'at.iptw.ipcw_nonlag.IRR',
-  'at.iptw.ipcw_nonlag.IRD',
-  'at.iptw.ipcw_nonlag.IRR_stab',
-  'at.iptw.ipcw_nonlag.IRD_stab',
-  
-  
-  # pooled weights
-  'at.ipcw_pool.IRR',
-  'at.ipcw_pool.IRD',
-  'at.ipcw_pool.IRR_stab',
-  'at.ipcw_pool.IRD_stab',
-  'at.iptw.ipcw_pool.IRR',
-  'at.iptw.ipcw_pool.IRD',
-  'at.iptw.ipcw_pool.IRR_stab',
-  'at.iptw.ipcw_pool.IRD_stab',
-  
-  # modified non-lagged weights
-  'at.ipcw_mod.IRR',
-  'at.ipcw_mod.IRD',
-  'at.ipcw_mod.IRR_stab',
-  'at.ipcw_mod.IRD_stab',
-  'at.iptw.ipcw_mod.IRR',
-  'at.iptw.ipcw_mod.IRD',
-  'at.iptw.ipcw_mod.IRR_stab',
-  'at.iptw.ipcw_mod.IRD_stab'
-)
-
-summary_results <- bootstrap_ci[row.names(bootstrap_ci) %in% rows_to_keep,]
-summary_results$variable <- row.names(summary_results)
-summary_results <- summary_results %>%
-  select(variable, everything())
-
-write_xlsx(summary_results, paste(path_results, 'incidence_rates_ci.xlsx', sep ='/'))
-saveRDS(summary_results, paste(path_results, 'incidence_rates_ci.rds', sep ='/'))
+# 
+# rows_to_keep <- c(
+#   ## ITT
+#   'itt.IRR',
+#   'itt.IRD',
+#   'itt.iptw.IRR',
+#   'itt.iptw.IRD',
+#   'itt.iptw.IRR_stab',
+#   'itt.iptw.IRD_stab',
+#   'at.IRR',
+#   'at.IRD',
+#   'at.iptw.IRR',
+#   'at.iptw.IRD',
+#   'at.iptw.IRR_stab',
+#   'at.iptw.IRD_stab',
+#   
+#   ## AT
+#   # lagged weights
+#   'at.ipcw_lag.IRR',
+#   'at.ipcw_lag.IRD',
+#   'at.ipcw_lag.IRR_stab',
+#   'at.ipcw_lag.IRD_stab',
+#   'at.iptw.ipcw_lag.IRR',
+#   'at.iptw.ipcw_lag.IRD',
+#   'at.iptw.ipcw_lag.IRR_stab',
+#   'at.iptw.ipcw_lag.IRD_stab',
+#   
+#   # non-lagged weights
+#   'at.ipcw_nonlag.IRR',
+#   'at.ipcw_nonlag.IRD',
+#   'at.ipcw_nonlag.IRR_stab',
+#   'at.ipcw_nonlag.IRD_stab',
+#   'at.iptw.ipcw_nonlag.IRR',
+#   'at.iptw.ipcw_nonlag.IRD',
+#   'at.iptw.ipcw_nonlag.IRR_stab',
+#   'at.iptw.ipcw_nonlag.IRD_stab',
+#   
+#   
+#   # pooled weights
+#   'at.ipcw_pool.IRR',
+#   'at.ipcw_pool.IRD',
+#   'at.ipcw_pool.IRR_stab',
+#   'at.ipcw_pool.IRD_stab',
+#   'at.iptw.ipcw_pool.IRR',
+#   'at.iptw.ipcw_pool.IRD',
+#   'at.iptw.ipcw_pool.IRR_stab',
+#   'at.iptw.ipcw_pool.IRD_stab',
+#   
+#   # modified non-lagged weights
+#   'at.ipcw_mod.IRR',
+#   'at.ipcw_mod.IRD',
+#   'at.ipcw_mod.IRR_stab',
+#   'at.ipcw_mod.IRD_stab',
+#   'at.iptw.ipcw_mod.IRR',
+#   'at.iptw.ipcw_mod.IRD',
+#   'at.iptw.ipcw_mod.IRR_stab',
+#   'at.iptw.ipcw_mod.IRD_stab'
+# )
+# 
+# summary_results <- bootstrap_ci[row.names(bootstrap_ci) %in% rows_to_keep,]
+# summary_results$variable <- row.names(summary_results)
+# summary_results <- summary_results %>%
+#   select(variable, everything())
+# 
+# write_xlsx(summary_results, paste(path_results, 'incidence_rates_ci.xlsx', sep ='/'))
+# saveRDS(summary_results, paste(path_results, 'incidence_rates_ci.rds', sep ='/'))
 
 

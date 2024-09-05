@@ -37,6 +37,7 @@ library(survival)
 library(cowplot)
 library(table1)
 library(writexl)
+library(tidysmd)
 
 # for analyses
 
@@ -194,6 +195,9 @@ table1 <- table1(
 
 table1
 write.table (table1 , "table1.csv", col.names = T, row.names=F, append= F, sep=',')
+
+# get SMDs
+tidy_smd(cohort, c(age_at_entry), .group = trt, .wts = c(iptw))
 
 #### COVARIATE ASSOCIATION OVER TIME ####
 
@@ -1008,7 +1012,7 @@ legend("bottomright",
 
 dev.off()
 
-#### FOREST PLOT - STABILIZED ####
+#### FOREST PLOT HR - STABILIZED ####
 
 cox_itt <- readRDS(paste(path_results, 'cox_itt.rds', sep = '/'))
 cox_itt_siptw <- readRDS(paste(path_results, 'cox_itt_siptw.rds', sep = '/'))
@@ -1159,7 +1163,7 @@ dev.off()
 
 
 
-#### FOREST PLOT - UNSTABILIZED ####
+#### FOREST PLOT HR - UNSTABILIZED ####
 
 cox_itt <- readRDS(paste(path_results, 'cox_itt.rds', sep = '/'))
 cox_itt_iptw <- readRDS(paste(path_results, 'cox_itt_iptw.rds', sep = '/'))
@@ -1425,9 +1429,7 @@ ggsave("censor_dist_d9.png", plot = censor_d9, width = 4, height = 4, units = "i
 censor_d10 <- plot_censoring_distribution(cens_d10, censor_time, count, "Censoring Distribution in Decile 10")
 ggsave("censor_dist_d10.png", plot = censor_d10, width = 4, height = 4, units = "in", bg = 'white')
 
-#### INCIDENCE RATE RATIOS ####
-
-# Unstabilized
+#### FOREST PLOT IRR - UNSTABILIZED ####
 
 incidence_rates <- readRDS(paste(path_results, 'incidence_rates_ci_fx.rds', sep ='/'))
 incidence_rates_chart <- incidence_rates[c(2,4,6,8,10,12),]
@@ -1519,7 +1521,7 @@ ggsave("forest_plot_IRR_unstab.png", plot = combined_plot, width = 6, height = 3
 
 dev.off()
 
-# Stabilized
+#### FOREST PLOT IRR - STABILIZED ####
 
 incidence_rates <- readRDS(paste(path_results, 'incidence_rates_ci_fx.rds', sep ='/'))
 incidence_rates_chart <- incidence_rates[c(25,26,28,30,32,34),]

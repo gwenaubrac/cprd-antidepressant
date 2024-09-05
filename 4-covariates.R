@@ -32,7 +32,7 @@
 
 # analysis: main, flex_grace_period, or 90_day_grace_period
 
-analysis <- 'flex_grace_period'
+analysis <- ''
 
 #### LOAD PACKAGES ####
 
@@ -98,10 +98,9 @@ cohort <- cohort %>%
       age_at_entry >= 55 & age_at_entry < 65 ~ '55-64',
       age_at_entry >= 65 & age_at_entry < 75 ~ '65-74',
       age_at_entry >= 75 & age_at_entry < 85 ~ '75-84',
-      age_at_entry >= 85 & age_at_entry < 95 ~ '85-94',
-      age_at_entry >= 95 ~ '>95'
+      age_at_entry > 85 ~ '>85'
     ),
-    age_group = factor(age_group, levels = c('18-24', '25-34', '35-44', '45-54', '55-64', '65-74', '75-84', '85-94', '>95'))
+    age_group = factor(age_group, levels = c('18-24', '25-34', '35-44', '45-54', '55-64', '65-74', '75-84', '>85'))
   )
 
 summary(cohort$age_group)

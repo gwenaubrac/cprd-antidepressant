@@ -33,7 +33,7 @@
 # male, female, young, old, 2019, 2020, 2021, 2022
 # depressed, not_depressed
 
-analysis <- '2022'
+analysis <- ''
 
 #### LOAD PACKAGES ####
 
@@ -144,6 +144,11 @@ if (analysis == 'male' | analysis == 'female') {
 base_variables
 
 #### EXAMINE PREDICTORS OF CENSORING ####
+
+# set reference group to largest group
+cohort$age_group <- relevel(cohort$age_group, ref = "25-34")
+cohort$deprivation <- relevel(cohort$deprivation, ref = "5")
+cohort$ethnicity <- relevel(cohort$ethnicity, ref = "White")
 
 predictors_switch <- glm(reformulate(base_variables, 'switch'), data = cohort, family = binomial())
 write_xlsx(tidy(predictors_switch), paste(path_results, 'predictors_switch.xlsx', sep ='/'))
@@ -294,31 +299,6 @@ cat(paste('Stabilized lagged IPCW weights: \n min:', min(cohort_long$sipcw_lag),
 cat(paste('Unstabilized non-lagged IPCW weights: \n min:', min(cohort_long$ipcw_nonlag), '\n max:', max(cohort_long$ipcw_nonlag), '\n mean:', mean(cohort_long$ipcw_nonlag), '\n sd:', sd(cohort_long$ipcw_nonlag), '\n'), file = ipcw_desc, append = TRUE)
 cat(paste('Stabilized non-lagged IPCW weights: \n min:', min(cohort_long$sipcw_nonlag), '\n max:', max(cohort_long$sipcw_nonlag), '\n mean:', mean(cohort_long$sipcw_nonlag), '\n sd:', sd(cohort_long$sipcw_nonlag), '\n'), file = ipcw_desc, append = TRUE)
 
-# truncate extreme weights to 50
-length(which(cohort_long$ipcw_lag > 50))
-length(which(cohort_long$sipcw_lag > 50))
-
-length(which(cohort_long$ipcw_nonlag > 50))
-length(which(cohort_long$sipcw_nonlag > 50))
-
-cat(paste('Number of IPCW lagged weights truncated to 50:', length(which(cohort_long$ipcw_lag > 50)), '\n'), file = ipcw_desc, append = TRUE)
-cat(paste('Number of IPCW non-lagged weights truncated to 50:', length(which(cohort_long$ipcw_nonlag > 50)), '\n'), file = ipcw_desc, append = TRUE)
-
-cat(paste('Number of sIPCW lagged weights truncated to 50:', length(which(cohort_long$sipcw_lag > 50)), '\n'), file = ipcw_desc, append = TRUE)
-cat(paste('Number of sIPCW non-lagged weights truncated to 50:', length(which(cohort_long$sipcw_nonlag > 50)), '\n'), file = ipcw_desc, append = TRUE)
-
-cohort_long %<>%
-  mutate(sipcw_nonlag = if_else(sipcw_nonlag > 50, 50, sipcw_nonlag),
-         ipcw_nonlag = if_else(ipcw_nonlag > 50, 50, ipcw_nonlag),
-         sipcw_lag = if_else(sipcw_lag > 50, 50, sipcw_lag),
-         ipcw_lag = if_else(ipcw_lag > 50, 50, ipcw_lag),
-         )
-
-cat(paste('Unstabilized truncated lagged IPCW weights: \n min:', min(cohort_long$ipcw_lag), '\n max:', max(cohort_long$ipcw_lag), '\n mean:', mean(cohort_long$ipcw_lag), '\n sd:', sd(cohort_long$ipcw_lag), '\n'), file = ipcw_desc, append = TRUE)
-cat(paste('Unstabilized truncated non-lagged IPCW weights: \n min:', min(cohort_long$ipcw_nonlag), '\n max:', max(cohort_long$ipcw_nonlag), '\n mean:', mean(cohort_long$ipcw_nonlag), '\n sd:', sd(cohort_long$ipcw_nonlag), '\n'), file = ipcw_desc, append = TRUE)
-cat(paste('Stabilized truncated lagged IPCW weights: \n min:', min(cohort_long$sipcw_lag), '\n max:', max(cohort_long$sipcw_lag), '\n mean:', mean(cohort_long$sipcw_lag), '\n sd:', sd(cohort_long$sipcw_lag), '\n'), file = ipcw_desc, append = TRUE)
-cat(paste('Stabilized truncated non-lagged IPCW weights: \n min:', min(cohort_long$sipcw_nonlag), '\n max:', max(cohort_long$sipcw_nonlag), '\n mean:', mean(cohort_long$sipcw_nonlag), '\n sd:', sd(cohort_long$sipcw_nonlag), '\n'), file = ipcw_desc, append = TRUE)
-
 #### POOLED WEIGHTS ####
 
 # function to get parametric probability of uncensored by next interval
@@ -362,21 +342,6 @@ cohort_long <- merge(cohort_long, getpooledweights, by = c('id', 'dec'), all.x =
 cat(paste('Unstabilized pooled IPCW weights: \n min:', min(cohort_long$ipcw_pool), '\n max:', max(cohort_long$ipcw_pool), '\n mean:', mean(cohort_long$ipcw_pool), '\n sd:', sd(cohort_long$ipcw_pool), '\n'), file = ipcw_desc, append = TRUE)
 cat(paste('Stabilized pooled IPCW weights: \n min:', min(cohort_long$sipcw_pool), '\n max:', max(cohort_long$sipcw_pool), '\n mean:', mean(cohort_long$sipcw_pool), '\n sd:', sd(cohort_long$sipcw_pool), '\n'), file = ipcw_desc, append = TRUE)
 
-# truncate extreme stabilized weights to 50
-length(which(cohort_long$ipcw_pool > 50))
-length(which(cohort_long$sipcw_pool > 50))
-
-cat(paste('Number of IPCW pooled weights truncated to 50:', length(which(cohort_long$ipcw_pool > 50)), '\n'), file = ipcw_desc, append = TRUE)
-cat(paste('Number of sIPCW pooled weights truncated to 50:', length(which(cohort_long$sipcw_pool > 50)), '\n'), file = ipcw_desc, append = TRUE)
-
-cohort_long %<>%
-  mutate(sipcw_pool = if_else(sipcw_pool > 50, 50, sipcw_pool),
-         ipcw_pool = if_else(ipcw_pool > 50, 50, ipcw_pool))
-
-cat(paste('Untabilized truncated pooled IPCW weights: \n min:', min(cohort_long$ipcw_pool), '\n max:', max(cohort_long$ipcw_pool), '\n mean:', mean(cohort_long$ipcw_pool), '\n sd:', sd(cohort_long$ipcw_pool), '\n'), file = ipcw_desc, append = TRUE)
-cat(paste('Stabilized truncated pooled IPCW weights: \n min:', min(cohort_long$sipcw_pool), '\n max:', max(cohort_long$sipcw_pool), '\n mean:', mean(cohort_long$sipcw_pool), '\n sd:', sd(cohort_long$sipcw_pool), '\n'), file = ipcw_desc, append = TRUE)
-
-
 #### NON-LAGGED MODEL MODIFIED Q1 WEIGHTS ####
 
 # modify weight for d1 to be 1 to account for lots of censoring happening at end of d1
@@ -389,8 +354,8 @@ cohort_long <- cohort_long %>%
 summary(cohort_long$ipcw_mod)
 summary(cohort_long$sipcw_mod)
 
-cat(paste('Unstabilized truncated modified non-lagged IPCW weights: \n min:', min(cohort_long$ipcw_mod), '\n max:', max(cohort_long$ipcw_mod), '\n mean:', mean(cohort_long$ipcw_mod), '\n sd:', sd(cohort_long$ipcw_mod), '\n'), file = ipcw_desc, append = TRUE)
-cat(paste('Stabilized truncated modified non-lagged IPCW weights: \n min:', min(cohort_long$sipcw_mod), '\n max:', max(cohort_long$sipcw_mod), '\n mean:', mean(cohort_long$sipcw_mod), '\n sd:', sd(cohort_long$sipcw_mod), '\n'), file = ipcw_desc, append = TRUE)
+cat(paste('Unstabilized modified non-lagged IPCW weights: \n min:', min(cohort_long$ipcw_mod), '\n max:', max(cohort_long$ipcw_mod), '\n mean:', mean(cohort_long$ipcw_mod), '\n sd:', sd(cohort_long$ipcw_mod), '\n'), file = ipcw_desc, append = TRUE)
+cat(paste('Stabilized modified non-lagged IPCW weights: \n min:', min(cohort_long$sipcw_mod), '\n max:', max(cohort_long$sipcw_mod), '\n mean:', mean(cohort_long$sipcw_mod), '\n sd:', sd(cohort_long$sipcw_mod), '\n'), file = ipcw_desc, append = TRUE)
 
 saveRDS(cohort_long, file = paste(path_cohort, 'antidepressant_cohort_ipcw.rds', sep='/'))
 
@@ -411,7 +376,7 @@ ipcw_pooled_fit_ssri <- glm(p_uncens_formula_pooled,
 
 write_xlsx(tidy(ipcw_pooled_fit_ssri), paste(path_results, 'ipcw_pooled_fit_ssri.xlsx', sep ='/'))
 
-# checks
+# check if censored patients have higher IPCW weights in one treatment group
 censored_snri <- cohort_long %>% 
   filter(censor == 1, trt_dummy == 0)
 
