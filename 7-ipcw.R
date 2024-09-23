@@ -159,6 +159,15 @@ write_xlsx(tidy(predictors_disc), paste(path_results, 'predictors_disc.xlsx', se
 predictors_cens <- glm(reformulate(base_variables, 'censor'), data = cohort, family = binomial())
 write_xlsx(tidy(predictors_cens), paste(path_results, 'predictors_cens.xlsx', sep ='/'))
 
+# treatment-specific probability of censoring
+cohort_snri <- cohort %>% filter(trt == 'snri')
+predictors_cens_snri <- glm(reformulate(base_variables, 'censor'), data = cohort_snri, family = binomial())
+write_xlsx(tidy(predictors_cens_snri), paste(path_results, 'predictors_cens_snri.xlsx', sep ='/'))
+
+cohort_ssri <- cohort %>% filter(trt == 'ssri')
+predictors_cens_ssri <- glm(reformulate(base_variables, 'censor'), data = cohort_ssri, family = binomial())
+write_xlsx(tidy(predictors_cens_ssri), paste(path_results, 'predictors_cens_ssri.xlsx', sep ='/'))
+
 #### CONVERT TO COUNTING TIME ####
 
 # counting_time: time in days between cohort entry and censoring or cohort exit, whichever occurred first

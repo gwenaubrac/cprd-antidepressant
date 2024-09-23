@@ -129,6 +129,11 @@ saveRDS(covs, file = paste(path_cohort, 'iptw_covs.rds', sep ='/')) # for plots 
 
 #### CALCULATE IPTW WEIGHTS ####
 
+# set reference group to largest group
+cohort$age_group <- relevel(cohort$age_group, ref = "25-34")
+cohort$deprivation <- relevel(cohort$deprivation, ref = "5")
+cohort$ethnicity <- relevel(cohort$ethnicity, ref = "White")
+
 ## Define IPTW model
 
 base_model <- reformulate(base_variables, 'trt_dummy')

@@ -16,6 +16,8 @@
 ## Notes: The grace period defines the number of days for what is considered a gap in treatment supply
 ## and can be adapted to be more or less conservative.
 ##
+## Algorithm used to define treatment duration was developed by Pauline Reynier at the Lady Davis Institute. 
+##
 ## ---------------------------
 
 #### LOAD PACKAGES ####
@@ -47,6 +49,8 @@ writeLines("Censoring description:", censor_desc)
 cat(paste("Date:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), '\n'), file = censor_desc, append= TRUE)
 
 #### DEFINE PRESCRIPTION DURATION ####
+
+# This algorithm to define treatment duration in the CPRD was developed by Pauline Reynier at the Lady Davis Institute
 
 common_dosages <- fread('Z:/EPI/Protocol 24_004042/202406_lookup/202406_Lookups_CPRDAurum/202406_Lookups_CPRDAurum/common_dosages.txt')
 common_dosages %<>% select(dosageid, dosage_text, daily_dose)

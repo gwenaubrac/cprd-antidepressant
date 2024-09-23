@@ -91,7 +91,9 @@ times_dec
 
 # remove variables that violate positivity assumption
 variables <- c(covariates, comorbidities)
-variables <- variables[!variables %in% c('hypocalcemia', 'hypomagnesemia', 'acute_renal_disease')] 
+# variables <- variables[!variables %in% c('hypocalcemia', 'hypomagnesemia', 'acute_renal_disease')] 
+variables <- variables[!variables %in% c('hypocalcemia', 'hypomagnesemia', 'acute_renal_disease', 'hypokalemia', 'cardiomyopathy')] 
+# variables <- variables[!variables %in% c('hypocalcemia', 'hypomagnesemia', 'acute_renal_disease', 'ethnicity')] 
 variables
 
 model <- readRDS(file = paste(path_results, 'iptw_model.rds', sep = '/'))
@@ -146,6 +148,11 @@ fit_and_predict_pooled <- function(data_subset) {
 rm(variables, covariates, model, analysis)
 
 setDT(cohort)
+
+# recategorize ethnicity because too few counts of certain groups
+cohort %<>%
+  mutate(ethnicity = if_else(ethnicity == 'Unknown', 'Unknown', if_else(ethnicity == 'White', 'White', 'Non-white')),
+         ethnicity = as.factor(ethnicity))
 
 #### BOOTSTRAP FUNCTION ####
 
@@ -1169,6 +1176,10 @@ bs <- function(data, indices) {
   
   # if use boot:
   bootstrap_results_manual <<- rbind(bootstrap_results_manual, result)
+  saveRDS(bootstrap_results_manual, file = paste(path_results, 'bootstrap_results_manual_save.rds', sep='/'))
+  
+  #bootstrap_results_manual_t0 <<- rbind(bootstrap_results_manual_t0, result)
+  #saveRDS(bootstrap_results_manual_t0, file = paste(path_results, 'bootstrap_results_manual_t0.rds', sep='/'))
   
   return(result)
   
@@ -1209,7 +1220,7 @@ bootstrap_results_manual <- data.frame(matrix(nrow = 1, ncol = length(result_nam
 names(bootstrap_results_manual) <- result_names
 
 # run either of (1) or (2)
-# (1) without clusters
+# (1) without clusters - best
 system.time({
   bootstrap_results_boot <- boot(
     data = cohort,
@@ -1219,38 +1230,42 @@ system.time({
   )
 })
 
-# (2) with clusters
-num_cores <- 4
-cluster <- makeCluster(num_cores)
+# test <- bootstrap_results_manual %>% select(at.iptw.ipcw_nonlag.IRR_stab)
+# summary(test)
 
-clusterExport(cluster, list("bs", "cohort", "comorbidities", "fit_and_predict", "fit_and_predict_base", "fit_and_predict_pooled",
-                      "times_dec", "p_uncens_predictors", "p_uncens_predictors_pooled", "predictors", "bootstrap_results_manual"))
+# (2) with clusters - does NOT work on large cohort (>50,000 obs)
+# num_cores <- 2
+# cluster <- makeCluster(num_cores)
+# 
+# clusterExport(cluster, list("bs", "cohort", "comorbidities", "fit_and_predict", "fit_and_predict_base", "fit_and_predict_pooled",
+#                       "times_dec", "p_uncens_predictors", "p_uncens_predictors_pooled", "predictors", "bootstrap_results_manual", "path_results"))
+# 
+# clusterEvalQ(cluster, {
+#  library(dplyr)
+#  library(magrittr)
+#  library(survival)
+#  library(lubridate)
+#  library(purrr)
+#  library(data.table)
+#  library(fastglm)
+# })
+# 
+# system.time({
+#  bootstrap_results_boot <- boot(
+#    data = cohort,
+#    statistic = bs,
+#    R = R,
+#    parallel = "snow",
+#    ncpus = num_cores,
+#    cl = cluster
+#  )
+#  
+# })
+# 
+# stopCluster(cluster)
 
-clusterEvalQ(cluster, {
- library(dplyr)
- library(magrittr)
- library(survival)
- library(lubridate)
- library(purrr)
- library(data.table)
- library(fastglm)
-})
-
-system.time({
- bootstrap_results_boot <- boot(
-   data = cohort,
-   statistic = bs,
-   R = R,
-   parallel = "snow",
-   ncpus = num_cores,
-   cl = cluster
- )
- 
-})
-
-stopCluster(cluster)
-
-
+# test <- bootstrap_results_manual %>% select(at.iptw.ipcw_nonlag.IRR_stab)
+# summary(test)
 
 bootstrap_results_manual <- bootstrap_results_manual[-1,]
 
@@ -1260,8 +1275,13 @@ bootstrap_results_manual <- bootstrap_results_manual[-1,]
 saveRDS(bootstrap_results_manual, file = paste(path_results, 'bootstrap_results_manual.rds', sep='/'))
 saveRDS(bootstrap_results_boot, file = paste(path_results, 'bootstrap_results_boot.rds', sep='/'))
 
+# just to get t0 (run only inside bs fx once using cohort instead of sample)
+# bootstrap_results_manual_t0 <- data.frame(matrix(nrow = 1, ncol = length(result_names)))
+# names(bootstrap_results_manual_t0) <- result_names
+
 #### BUILD BOOTSTRAPPED CIs - USING BOOT.CI ####
 
+bootstrap_results_boot <- readRDS (file = paste(path_results, 'bootstrap_results_boot.rds', sep = '/'))
 bootstrap_ci <- data.frame(matrix(nrow = 0, ncol = 3))
 colnames(bootstrap_ci) <- c('estimate', 'lower_ci', 'upper_ci')
 
@@ -1397,41 +1417,46 @@ saveRDS(summary_results, paste(path_results, 'incidence_rates_ci_fx.rds', sep ='
 # saveRDS(bootstrap_results_future, paste(path_results, 'bootstrap_results_future.rds', sep ='/'))
 
 #### BUILD BOOTSTRAPPED CIs - USING FUTURE OR MANUAL ####
-# 
-# results <- readRDS(paste(path_results, 'bootstrap_results_manual.rds', sep='/'))
-# results <- readRDS(paste(path_results, 'bootstrap_results_future.rds', sep='/'))
-# 
-# bootstrap_ci <- data.frame(matrix(nrow = 0, ncol = 3))
-# colnames(bootstrap_ci) <- c('estimate', 'lower_ci', 'upper_ci')
-# 
-# get_stat_ci <- function(stat_name) {
-#   
-#   stat_ci <- data.frame(
-#     estimate = NA,
-#     lower_ci = NA,
-#     upper_ci = NA
-#   )
-#   
-#   stat_values <- results[stat_name]
-#   
-#   stat_ci$estimate <- quantile(stat_values, prob = c(0.5), na.rm = TRUE)
-#   stat_ci$lower_ci <- quantile(stat_values, prob = c(0.025), na.rm = TRUE)
-#   stat_ci$upper_ci <- quantile(stat_values, prob = c(0.975), na.rm = TRUE)
-#   
-#   rownames(stat_ci)[1] <- stat_name
-#   bootstrap_ci <<- rbind(bootstrap_ci, stat_ci)
-#   
-# }
-# 
-# stat_names <- names(results)
-# invisible(lapply(stat_names, get_stat_ci))
-# 
-# bootstrap_ci$variable <- row.names(bootstrap_ci)
-# 
-# bootstrap_ci <- bootstrap_ci %>%
-#   select(variable, everything())
-# 
-# saveRDS(bootstrap_ci, file = paste(path_results, 'bootstrap_ci.rds', sep='/'))
+
+results <- readRDS(paste(path_results, 'bootstrap_results_manual.rds', sep='/'))
+results_t0 <- readRDS(paste(path_results, 'bootstrap_results_manual_t0.rds', sep='/'))
+#results <- readRDS(paste(path_results, 'bootstrap_results_future.rds', sep='/'))
+
+results %<>% filter(at.ipcw_nonlag.IRR_stab <= 3)
+
+bootstrap_ci <- data.frame(matrix(nrow = 0, ncol = 3))
+colnames(bootstrap_ci) <- c('estimate', 'lower_ci', 'upper_ci')
+
+get_stat_ci <- function(stat_name) {
+
+  stat_ci <- data.frame(
+    estimate = NA,
+    lower_ci = NA,
+    upper_ci = NA
+  )
+
+  stat_values <- results[stat_name]
+  
+  stat_ci$estimate <- results_t0[2, stat_name]
+
+  #stat_ci$estimate <- quantile(stat_values, prob = c(0.5), na.rm = TRUE)
+  stat_ci$lower_ci <- quantile(stat_values, prob = c(0.025), na.rm = TRUE)
+  stat_ci$upper_ci <- quantile(stat_values, prob = c(0.975), na.rm = TRUE)
+
+  rownames(stat_ci)[1] <- stat_name
+  bootstrap_ci <<- rbind(bootstrap_ci, stat_ci)
+
+}
+
+stat_names <- names(results)
+invisible(lapply(stat_names, get_stat_ci))
+
+bootstrap_ci$variable <- row.names(bootstrap_ci)
+
+bootstrap_ci <- bootstrap_ci %>%
+  select(variable, everything())
+
+saveRDS(bootstrap_ci, file = paste(path_results, 'bootstrap_ci.rds', sep='/'))
 
 ## Extract CIs for overall IRR 
 
@@ -1439,71 +1464,71 @@ saveRDS(summary_results, paste(path_results, 'incidence_rates_ci_fx.rds', sep ='
 # middle: nothing (overall) or .y-m (ex: 2019-01)
 # middle: .iptw, .iptw_ipcw
 # end: .IRR, .IRD, .IRR_stab, .IRD_stab
-# 
-# rows_to_keep <- c(
-#   ## ITT
-#   'itt.IRR',
-#   'itt.IRD',
-#   'itt.iptw.IRR',
-#   'itt.iptw.IRD',
-#   'itt.iptw.IRR_stab',
-#   'itt.iptw.IRD_stab',
-#   'at.IRR',
-#   'at.IRD',
-#   'at.iptw.IRR',
-#   'at.iptw.IRD',
-#   'at.iptw.IRR_stab',
-#   'at.iptw.IRD_stab',
-#   
-#   ## AT
-#   # lagged weights
-#   'at.ipcw_lag.IRR',
-#   'at.ipcw_lag.IRD',
-#   'at.ipcw_lag.IRR_stab',
-#   'at.ipcw_lag.IRD_stab',
-#   'at.iptw.ipcw_lag.IRR',
-#   'at.iptw.ipcw_lag.IRD',
-#   'at.iptw.ipcw_lag.IRR_stab',
-#   'at.iptw.ipcw_lag.IRD_stab',
-#   
-#   # non-lagged weights
-#   'at.ipcw_nonlag.IRR',
-#   'at.ipcw_nonlag.IRD',
-#   'at.ipcw_nonlag.IRR_stab',
-#   'at.ipcw_nonlag.IRD_stab',
-#   'at.iptw.ipcw_nonlag.IRR',
-#   'at.iptw.ipcw_nonlag.IRD',
-#   'at.iptw.ipcw_nonlag.IRR_stab',
-#   'at.iptw.ipcw_nonlag.IRD_stab',
-#   
-#   
-#   # pooled weights
-#   'at.ipcw_pool.IRR',
-#   'at.ipcw_pool.IRD',
-#   'at.ipcw_pool.IRR_stab',
-#   'at.ipcw_pool.IRD_stab',
-#   'at.iptw.ipcw_pool.IRR',
-#   'at.iptw.ipcw_pool.IRD',
-#   'at.iptw.ipcw_pool.IRR_stab',
-#   'at.iptw.ipcw_pool.IRD_stab',
-#   
-#   # modified non-lagged weights
-#   'at.ipcw_mod.IRR',
-#   'at.ipcw_mod.IRD',
-#   'at.ipcw_mod.IRR_stab',
-#   'at.ipcw_mod.IRD_stab',
-#   'at.iptw.ipcw_mod.IRR',
-#   'at.iptw.ipcw_mod.IRD',
-#   'at.iptw.ipcw_mod.IRR_stab',
-#   'at.iptw.ipcw_mod.IRD_stab'
-# )
-# 
-# summary_results <- bootstrap_ci[row.names(bootstrap_ci) %in% rows_to_keep,]
-# summary_results$variable <- row.names(summary_results)
-# summary_results <- summary_results %>%
-#   select(variable, everything())
-# 
-# write_xlsx(summary_results, paste(path_results, 'incidence_rates_ci.xlsx', sep ='/'))
-# saveRDS(summary_results, paste(path_results, 'incidence_rates_ci.rds', sep ='/'))
+
+rows_to_keep <- c(
+  ## ITT
+  'itt.IRR',
+  'itt.IRD',
+  'itt.iptw.IRR',
+  'itt.iptw.IRD',
+  'itt.iptw.IRR_stab',
+  'itt.iptw.IRD_stab',
+  'at.IRR',
+  'at.IRD',
+  'at.iptw.IRR',
+  'at.iptw.IRD',
+  'at.iptw.IRR_stab',
+  'at.iptw.IRD_stab',
+
+  ## AT
+  # lagged weights
+  'at.ipcw_lag.IRR',
+  'at.ipcw_lag.IRD',
+  'at.ipcw_lag.IRR_stab',
+  'at.ipcw_lag.IRD_stab',
+  'at.iptw.ipcw_lag.IRR',
+  'at.iptw.ipcw_lag.IRD',
+  'at.iptw.ipcw_lag.IRR_stab',
+  'at.iptw.ipcw_lag.IRD_stab',
+
+  # non-lagged weights
+  'at.ipcw_nonlag.IRR',
+  'at.ipcw_nonlag.IRD',
+  'at.ipcw_nonlag.IRR_stab',
+  'at.ipcw_nonlag.IRD_stab',
+  'at.iptw.ipcw_nonlag.IRR',
+  'at.iptw.ipcw_nonlag.IRD',
+  'at.iptw.ipcw_nonlag.IRR_stab',
+  'at.iptw.ipcw_nonlag.IRD_stab',
+
+
+  # pooled weights
+  'at.ipcw_pool.IRR',
+  'at.ipcw_pool.IRD',
+  'at.ipcw_pool.IRR_stab',
+  'at.ipcw_pool.IRD_stab',
+  'at.iptw.ipcw_pool.IRR',
+  'at.iptw.ipcw_pool.IRD',
+  'at.iptw.ipcw_pool.IRR_stab',
+  'at.iptw.ipcw_pool.IRD_stab',
+
+  # modified non-lagged weights
+  'at.ipcw_mod.IRR',
+  'at.ipcw_mod.IRD',
+  'at.ipcw_mod.IRR_stab',
+  'at.ipcw_mod.IRD_stab',
+  'at.iptw.ipcw_mod.IRR',
+  'at.iptw.ipcw_mod.IRD',
+  'at.iptw.ipcw_mod.IRR_stab',
+  'at.iptw.ipcw_mod.IRD_stab'
+)
+
+summary_results <- bootstrap_ci[row.names(bootstrap_ci) %in% rows_to_keep,]
+summary_results$variable <- row.names(summary_results)
+summary_results <- summary_results %>%
+  select(variable, everything())
+
+write_xlsx(summary_results, paste(path_results, 'incidence_rates_ci.xlsx', sep ='/'))
+saveRDS(summary_results, paste(path_results, 'incidence_rates_ci.rds', sep ='/'))
 
 

@@ -38,6 +38,7 @@ library(cowplot)
 library(table1)
 library(writexl)
 library(tidysmd)
+library(tidyr)
 
 # for analyses
 
@@ -123,7 +124,7 @@ setwd(path_plots)
 #### TABLE 1 ####
 
 # data formatting
-cohort <- readRDS(paste(path_cohort, 'antidepressant_cohort_covariates.rds', sep = '/'))
+cohort <- readRDS(paste(path_cohort, 'antidepressant_cohort_iptw.rds', sep = '/'))
 
 cohort %<>%
   mutate(disc_one_year = as.factor(if_else(disc == 1 & disc_date < ymd(entry_date+365), 1, 0)))
@@ -198,13 +199,23 @@ write.table (table1 , "table1.csv", col.names = T, row.names=F, append= F, sep='
 
 # get SMDs
 tidy_smd(cohort, c(age_at_entry), .group = trt, .wts = c(iptw))
+tidy_smd(cohort, c(age_group), .group = trt, .wts = c(iptw))
 
 #### COVARIATE ASSOCIATION OVER TIME ####
 
 cohort <- readRDS(file = paste(path_cohort, 'antidepressant_cohort_covariates.rds', sep = '/'))
 
-base_variables <- c('hypertension_base', 'depression_base', 'hyperlipidemia_base', 'suicidal_ideation_self_harm_base') # most common comorb
-#base_variables <- c(covariates) # specified covariates
+# choose which variables to plot:
+
+# most common comorbidities:
+base_variables <- c('hypertension_base', 'depression_base', 'hyperlipidemia_base', 'suicidal_ideation_self_harm_base') 
+
+# comorbidities most associated with trt:
+base_variables <- c('age_group')
+
+# all specified covariates
+base_variables <- c(covariates) # specified covariates
+
 grouping_var <- 'month_year' 
 trt_col_name <- 'trt_dummy'
 
@@ -505,7 +516,7 @@ lines(ref_at_siptw,
       lty = 1,
       lwd = 2)
 
-legend("bottomright", 
+legend("topleft", 
        legend = c("ITT", "ITT (sIPTW)", "AT", "AT (sIPTW)"),
        col = c('#f56864', '#f56864', '#6a00a8', '#6a00a8'),
        lty = c(2, 1, 2, 1), 
@@ -565,7 +576,7 @@ lines(ref_at_siptw_sipcw_mod,
       lwd = 2
 )
 
-legend("bottomright", 
+legend("topleft", 
        legend = c("AT (sIPTW)", "AT (sIPTW + lagged sIPCW)", "AT (sIPTW + non-lagged sIPCW)", 
                   "AT (sIPTW + pooled sIPCW)", "AT (sIPTW + modified non-lagged sIPCW"),
        col = c( '#6a00a8', '#9a00b1', '#d53e4f', '#f9a463', '#f9c43d'),
@@ -638,7 +649,7 @@ lines(comp_at_siptw,
       lty = 1,
       lwd = 2)
 
-legend("bottomright", 
+legend("topleft", 
        legend = c("ITT", "ITT (sIPTW)", "AT", "AT (sIPTW)"),
        col = c('#f56864', '#f56864', '#6a00a8', '#6a00a8'),
        lty = c(2, 1, 2, 1), 
@@ -698,7 +709,7 @@ lines(comp_at_siptw_sipcw_mod,
       lwd = 2
 )
 
-legend("bottomright", 
+legend("topleft", 
        legend = c("AT (sIPTW)", "AT (sIPTW + lagged sIPCW)", "AT (sIPTW + non-lagged sIPCW)", 
                   "AT (sIPTW + pooled sIPCW)", "AT (sIPTW + modified non-lagged sIPCW"),
        col = c( '#6a00a8', '#9a00b1', '#d53e4f', '#f9a463', '#f9c43d'),
@@ -798,7 +809,7 @@ lines(ref_at_siptw,
       lty = 1,
       lwd = 2)
 
-legend("bottomright", 
+legend("topleft", 
        legend = c("ITT", "ITT (sIPTW)", "AT", "AT (sIPTW)", "intervals"),
        col = c('#f56864', '#f56864', '#6a00a8', '#6a00a8', '#f8e4a7'),
        lty = c(2, 1, 2, 1, 3), 
@@ -861,7 +872,7 @@ lines(ref_at_siptw_sipcw_mod,
       lwd = 2
 )
 
-legend("bottomright", 
+legend("topleft", 
        legend = c("AT (sIPTW)", "AT (sIPTW + lagged sIPCW)", "AT (sIPTW + non-lagged sIPCW)", 
                   "AT (sIPTW + pooled sIPCW)", "AT (sIPTW + modified non-lagged sIPCW", 'intervals'),
        col = c( '#6a00a8', '#9a00b1', '#d53e4f', '#f9a463', '#f9c43d', '#f8e4a7'),
@@ -937,7 +948,7 @@ lines(comp_at_siptw,
       lty = 1,
       lwd = 2)
 
-legend("bottomright", 
+legend("topleft", 
        legend = c("ITT", "ITT (sIPTW)", "AT", "AT (sIPTW)", 'intervals'),
        col = c('#f56864', '#f56864', '#6a00a8', '#6a00a8', '#f8e4a7'),
        lty = c(2, 1, 2, 1, 3), 
@@ -1000,7 +1011,7 @@ lines(comp_at_siptw_sipcw_mod,
       lwd = 2
 )
 
-legend("bottomright", 
+legend("topleft", 
        legend = c("AT (sIPTW)", "AT (sIPTW + lagged sIPCW)", "AT (sIPTW + non-lagged sIPCW)", 
                   "AT (sIPTW + pooled sIPCW)", "AT (sIPTW + modified non-lagged sIPCW", 'intervals'),
        col = c( '#6a00a8', '#9a00b1', '#d53e4f', '#f9a463', '#f9c43d', '#f8e4a7'),
@@ -1096,7 +1107,7 @@ p <- ggplot(summary_cox_results, aes(x = estimate, y = model, color = model)) +
   geom_errorbarh(aes(xmin = lower_ci, xmax = upper_ci), height = 0.2) +  
   geom_vline(xintercept = 1, linetype = "dashed", color = "black") + 
   theme_minimal() +  
-  labs(x = "estimate (95% CI)", y = "model", title = "Forest Plot of Hazard Ratios by Model") +  
+  labs(x = "HR (95% CI)", y = "model", title = "Forest Plot of Hazard Ratios by Model") +  
   scale_color_manual(values = model_colors) +  
   theme(
     axis.text.y = element_text(size = 8), 
@@ -1246,7 +1257,7 @@ p <- ggplot(summary_cox_results, aes(x = estimate, y = model, color = model)) +
   geom_errorbarh(aes(xmin = lower_ci, xmax = upper_ci), height = 0.2) +  
   geom_vline(xintercept = 1, linetype = "dashed", color = "black") + 
   theme_minimal() +  
-  labs(x = "estimate (95% CI)", y = "model", title = "Forest Plot of Hazard Ratios by Model") +  
+  labs(x = "HR (95% CI)", y = "model", title = "Forest Plot of Hazard Ratios by Model") +  
   scale_color_manual(values = model_colors) +  
   theme(
     axis.text.y = element_text(size = 8), 
@@ -1381,7 +1392,7 @@ cens_d10 <- data_d10 %>%
 plot_censoring_distribution <- function(data, x_var, y_var, title) {
   ggplot(data, aes(x = {{ x_var }}, y = {{ y_var }})) +
     geom_line(color = "#6a00a8", linewidth = 0.5) +
-    labs(x = "time", y = "number of people censored", title = title) +
+    labs(x = "time (days)", y = "patients censored", title = title) +
     theme_minimal() +
     theme(
       axis.text.x = element_text(size = 8, angle = 45, vjust = 1, hjust = 1),
@@ -1399,39 +1410,47 @@ plot_censoring_distribution <- function(data, x_var, y_var, title) {
     )
 }
 
-censor_d1 <- plot_censoring_distribution(cens_d1, censor_time, count, "Censoring Distribution in Decile 1")
+censor_d1 <- plot_censoring_distribution(cens_d1, censor_time, count, "Censoring in Interval 1")
 ggsave("censor_dist_d1.png", plot = censor_d1, width = 4, height = 4, units = "in", bg = 'white')
 
-censor_d2 <- plot_censoring_distribution(cens_d2, censor_time, count, "Censoring Distribution in Decile 2")
+censor_d2 <- plot_censoring_distribution(cens_d2, censor_time, count, "Censoring in Interval 2")
 ggsave("censor_dist_d2.png", plot = censor_d2, width = 4, height = 4, units = "in", bg = 'white')
 
-censor_d3 <- plot_censoring_distribution(cens_d3, censor_time, count, "Censoring Distribution in Decile 3")
+censor_d3 <- plot_censoring_distribution(cens_d3, censor_time, count, "Censoring in Interval 3")
 ggsave("censor_dist_d3.png", plot = censor_d3, width = 4, height = 4, units = "in", bg = 'white')
 
-censor_d4 <- plot_censoring_distribution(cens_d4, censor_time, count, "Censoring Distribution in Decile 4")
+censor_d4 <- plot_censoring_distribution(cens_d4, censor_time, count, "Censoring in Interval 4")
 ggsave("censor_dist_d4.png", plot = censor_d4, width = 4, height = 4, units = "in", bg = 'white')
 
-censor_d5 <- plot_censoring_distribution(cens_d5, censor_time, count, "Censoring Distribution in Decile 5")
+censor_d5 <- plot_censoring_distribution(cens_d5, censor_time, count, "Censoring in Interval 5")
 ggsave("censor_dist_d5.png", plot = censor_d5, width = 4, height = 4, units = "in", bg = 'white')
 
-censor_d6 <- plot_censoring_distribution(cens_d6, censor_time, count, "Censoring Distribution in Decile 6")
+censor_d6 <- plot_censoring_distribution(cens_d6, censor_time, count, "Censoring in Interval 6")
 ggsave("censor_dist_d6.png", plot = censor_d6, width = 4, height = 4, units = "in", bg = 'white')
 
-censor_d7 <- plot_censoring_distribution(cens_d7, censor_time, count, "Censoring Distribution in Decile 7")
+censor_d7 <- plot_censoring_distribution(cens_d7, censor_time, count, "Censoring in Interval 7")
 ggsave("censor_dist_d7.png", plot = censor_d7, width = 4, height = 4, units = "in", bg = 'white')
 
-censor_d8 <- plot_censoring_distribution(cens_d8, censor_time, count, "Censoring Distribution in Decile 8")
+censor_d8 <- plot_censoring_distribution(cens_d8, censor_time, count, "Censoring in Interval 8")
 ggsave("censor_dist_d8.png", plot = censor_d8, width = 4, height = 4, units = "in", bg = 'white')
 
-censor_d9 <- plot_censoring_distribution(cens_d9, censor_time, count, "Censoring Distribution in Decile 9")
+censor_d9 <- plot_censoring_distribution(cens_d9, censor_time, count, "Censoring in Interval 9")
 ggsave("censor_dist_d9.png", plot = censor_d9, width = 4, height = 4, units = "in", bg = 'white')
 
-censor_d10 <- plot_censoring_distribution(cens_d10, censor_time, count, "Censoring Distribution in Decile 10")
+censor_d10 <- plot_censoring_distribution(cens_d10, censor_time, count, "Censoring in Interval 10")
 ggsave("censor_dist_d10.png", plot = censor_d10, width = 4, height = 4, units = "in", bg = 'white')
+
+library(gridExtra)
+grid_cens_plots <- grid.arrange(censor_d1, censor_d2, censor_d3, censor_d4, censor_d5, 
+             censor_d6, censor_d7, censor_d8, censor_d9, censor_d10, ncol=2)
+ggsave("grid_cens_plots.png", plot = grid_cens_plots, width = 8, height = 10, units = "in", bg = 'white')
 
 #### FOREST PLOT IRR - UNSTABILIZED ####
 
+# choose one of saved CIs (from boot function or computed manually)
 incidence_rates <- readRDS(paste(path_results, 'incidence_rates_ci_fx.rds', sep ='/'))
+#incidence_rates <- readRDS(paste(path_results, 'incidence_rates_ci.rds', sep ='/'))
+
 incidence_rates_chart <- incidence_rates[c(2,4,6,8,10,12),]
 incidence_rates_chart %<>% select(-variable)
 
@@ -1456,7 +1475,7 @@ p <- ggplot(incidence_rates_chart, aes(x = estimate, y = model, color = model)) 
   geom_errorbarh(aes(xmin = lower_ci, xmax = upper_ci), height = 0.2) +  
   geom_vline(xintercept = 1, linetype = "dashed", color = "black") + 
   theme_minimal() +  
-  labs(x = "estimate (95% CI)", y = "model", title = "Forest Plot of Incidence Rate Ratios by Model") +  
+  labs(x = "IRR (95% CI)", y = "model", title = "Forest Plot of Incidence Rate Ratios by Model") +  
   scale_color_manual(values = model_colors) +  
   theme(
     axis.text.y = element_text(size = 8), 
@@ -1475,20 +1494,20 @@ p <- ggplot(incidence_rates_chart, aes(x = estimate, y = model, color = model)) 
 
 p
 
-# y_labels <- rev(paste(
-#   c(round(incidence_rates_chart$estimate, 2)),
-#   ' (',round(incidence_rates_chart$lower_ci, 2),', ',
-#   round(incidence_rates_chart$upper_ci, 2), ')',
-#   sep = ''
-# ))
-
-# in case some values are exactly the same for labeling:
 y_labels <- rev(paste(
-  c(round(incidence_rates_chart$estimate, 3)),
-  ' (',round(incidence_rates_chart$lower_ci, 3),', ',
-  round(incidence_rates_chart$upper_ci, 3), ')',
+  c(round(incidence_rates_chart$estimate, 2)),
+  ' (',round(incidence_rates_chart$lower_ci, 2),', ',
+  round(incidence_rates_chart$upper_ci, 2), ')',
   sep = ''
 ))
+
+# in case some values are exactly the same for labeling:
+# y_labels <- rev(paste(
+#   c(round(incidence_rates_chart$estimate, 3)),
+#   ' (',round(incidence_rates_chart$lower_ci, 3),', ',
+#   round(incidence_rates_chart$upper_ci, 3), ')',
+#   sep = ''
+# ))
 
 y_labels
 
@@ -1524,6 +1543,8 @@ dev.off()
 #### FOREST PLOT IRR - STABILIZED ####
 
 incidence_rates <- readRDS(paste(path_results, 'incidence_rates_ci_fx.rds', sep ='/'))
+#incidence_rates <- readRDS(paste(path_results, 'incidence_rates_ci.rds', sep ='/'))
+
 incidence_rates_chart <- incidence_rates[c(25,26,28,30,32,34),]
 incidence_rates_chart %<>% select(-variable)
 
@@ -1548,7 +1569,7 @@ p <- ggplot(incidence_rates_chart, aes(x = estimate, y = model, color = model)) 
   geom_errorbarh(aes(xmin = lower_ci, xmax = upper_ci), height = 0.2) +  
   geom_vline(xintercept = 1, linetype = "dashed", color = "black") + 
   theme_minimal() +  
-  labs(x = "estimate (95% CI)", y = "model", title = "Forest Plot of Incidence Rate Ratios by Model") +  
+  labs(x = "IRR (95% CI)", y = "model", title = "Forest Plot of Incidence Rate Ratios by Model") +  
   scale_color_manual(values = model_colors) +  
   theme(
     axis.text.y = element_text(size = 8), 
@@ -1567,20 +1588,20 @@ p <- ggplot(incidence_rates_chart, aes(x = estimate, y = model, color = model)) 
 
 p
 
-# y_labels <- rev(paste(
-#   c(round(incidence_rates_chart$estimate, 2)),
-#   ' (',round(incidence_rates_chart$lower_ci, 2),', ',
-#   round(incidence_rates_chart$upper_ci, 2), ')',
-#   sep = ''
-# ))
-
-# in case some values are exactly the same for labeling:
 y_labels <- rev(paste(
-  c(round(incidence_rates_chart$estimate, 3)),
-  ' (',round(incidence_rates_chart$lower_ci, 3),', ',
-  round(incidence_rates_chart$upper_ci, 3), ')',
+  c(round(incidence_rates_chart$estimate, 2)),
+  ' (',round(incidence_rates_chart$lower_ci, 2),', ',
+  round(incidence_rates_chart$upper_ci, 2), ')',
   sep = ''
 ))
+
+# in case some values are exactly the same for labeling:
+# y_labels <- rev(paste(
+#   c(round(incidence_rates_chart$estimate, 3)),
+#   ' (',round(incidence_rates_chart$lower_ci, 3),', ',
+#   round(incidence_rates_chart$upper_ci, 3), ')',
+#   sep = ''
+# ))
 
 y_labels
 
@@ -1613,3 +1634,298 @@ ggsave("forest_plot_IRR_stab.png", plot = combined_plot, width = 6, height = 3, 
 
 dev.off()
 
+
+#### HISTOGRAM OF AGE OVER DECILES BY TRT ####
+
+# Proportion young and old by decile - percentile age groups
+cohort_long <- readRDS(file = paste(path_cohort, 'antidepressant_cohort_ipcw.rds', sep = '/'))
+
+age_dist <- quantile(cohort$age_at_entry, probs = c(0.25, 0.5, 0.75))
+age_dist
+
+cohort_long %<>% mutate(combo_weight = siptw*sipcw_pool,
+                        age_25 = if_else(age_at_entry < age_dist[[1]], 1 , 0),
+                        age_25_50 = if_else(age_at_entry >= age_dist[[1]] & age_at_entry < age_dist[[2]], 1, 0),
+                        age_50_75 = if_else(age_at_entry >= age_dist[[2]] & age_at_entry < age_dist[[3]], 1, 0),
+                        age_75 = if_else(age_at_entry >=age_dist[[3]], 1, 0))
+
+hist_age_perc <- cohort_long %>% 
+  group_by(trt, dec) %>% 
+  summarize(prop_25 = sum(age_25 == 1) / n(), 
+            prop_25_50 = sum(age_25_50 == 1) / n(),
+            prop_50_75 = sum(age_50_75 == 1) / n(),
+            prop_75 = sum(age_75 == 1) / n())
+
+df_long <- pivot_longer(hist_age_perc, cols = c(prop_25, prop_25_50, prop_50_75, prop_75), 
+                        names_to = "age_group", 
+                        values_to = "proportion")
+
+hist_age_perc <- ggplot(df_long, aes(x = factor(dec), y = proportion, fill = age_group)) +
+  geom_bar(stat = "identity", position = "stack") +
+  scale_fill_manual(values = c('#9a00b1', '#f56864', '#f9a463', '#f8e4a7'),
+                    labels = c('<25%', '25-50%', '50-75%', '>75%')) +
+  facet_wrap(~ trt, labeller = as_labeller(c('snri' = 'SNRI', 'ssri' = 'SSRI'))) + 
+  labs(title = "Age Groups Over Time by Treatment",
+       x = "Interval",
+       y = "Proportion",
+       fill = "Age Percentile") +
+  theme_minimal() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+
+hist_age_perc
+ggsave("hist_age_perc.png", plot = hist_age_perc, width = 6, height = 3, units = "in", bg = 'white')
+
+hist_age_perc_weighted <- cohort_long %>% # weighted
+  group_by(trt, dec) %>%
+  summarize(
+    prop_25 = sum(combo_weight[age_25==1]) / sum(combo_weight),
+    prop_25_50 = sum(combo_weight[age_25_50==1]) / sum(combo_weight),
+    prop_50_75 = sum(combo_weight[age_50_75==1]) / sum(combo_weight),
+    prop_75 = sum(combo_weight[age_75==1]) / sum(combo_weight),
+  )
+
+df_long <- pivot_longer(hist_age_perc_weighted, cols = c(prop_25, prop_25_50, prop_50_75, prop_75), 
+                        names_to = "age_group", 
+                        values_to = "proportion")
+
+hist_age_perc_weighted <- ggplot(df_long, aes(x = factor(dec), y = proportion, fill = age_group)) +
+  geom_bar(stat = "identity", position = "stack") +
+  scale_fill_manual(values = c('#9a00b1', '#f56864', '#f9a463', '#f8e4a7'),
+                    labels = c('<25%', '25-50%', '50-75%', '>75%')) +
+  facet_wrap(~ trt, labeller = as_labeller(c('snri' = 'SNRI', 'ssri' = 'SSRI'))) + 
+  labs(title = "Age Groups Over Time by Treatment (IPTW + IPCW)",
+       x = "Interval",
+       y = "Proportion",
+       fill = "Age Group") +
+  theme_minimal() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+
+hist_age_perc_weighted
+ggsave("hist_age_perc_weighted.png", plot = hist_age_perc_weighted, width = 6, height = 3, units = "in", bg = 'white')
+
+# Proportion young and old by decile - age groups
+cohort_long <- readRDS(file = paste(path_cohort, 'antidepressant_cohort_ipcw.rds', sep = '/'))
+cohort_long %<>% mutate(combo_weight = siptw*sipcw_pool)
+
+hist_age <- cohort_long %>% 
+  group_by(trt, dec) %>% 
+  summarize(group_18_24 = sum(age_group == '18-24') / n(), 
+            group_25_34 = sum(age_group == '25-34') / n(),
+            group_35_44 = sum(age_group == '35-44') / n(),
+            group_45_54 = sum(age_group == '45-54') / n(),
+            group_55_64 = sum(age_group == '55-64') / n(),
+            group_65_74 = sum(age_group == '65-74') / n(),
+            group_75_84 = sum(age_group == '75-84') / n(),
+            group_85_over = sum(age_group == '>85') / n()
+            )
+
+df_long <- pivot_longer(hist_age, cols = c(group_18_24, group_25_34, group_35_44, 
+                                           group_45_54, group_55_64, group_65_74, group_75_84, group_85_over), 
+                        names_to = "age_group", 
+                        values_to = "proportion")
+
+hist_age <- ggplot(df_long, aes(x = factor(dec), y = proportion, fill = age_group)) +
+  geom_bar(stat = "identity", position = "stack") +
+  scale_fill_manual(values = c('#6a00a8', '#9a00b1', '#d53e4f', '#f56864', '#f9a463', '#fdbd22','#f8e4a7', '#E0E0E0'),
+                    labels = c('18-24', '25-34', '35-44', '45-54', '55-64', '65-74', '75-84', '>85')) +
+  facet_wrap(~ trt, labeller = as_labeller(c('snri' = 'SNRI', 'ssri' = 'SSRI'))) + 
+  labs(title = "Age Groups Over Time by Treatment",
+       x = "Interval",
+       y = "Proportion",
+       fill = "Age Group") +
+  theme_minimal() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+
+hist_age
+ggsave("hist_age.png", plot = hist_age, width = 6, height = 3, units = "in", bg = 'white')
+
+
+hist_age_weighted_iptw <- cohort_long %>% # weighted with IPTW only
+  group_by(trt, dec) %>%
+  summarize(
+    group_18_24 = sum(siptw[age_group == '18-24']) / sum(siptw),
+    group_25_34 = sum(siptw[age_group == '25-34']) / sum(siptw),
+    group_35_44 = sum(siptw[age_group == '35-44']) / sum(siptw),
+    group_45_54 = sum(siptw[age_group == '45-54']) / sum(siptw),
+    group_55_64 = sum(siptw[age_group == '55-64']) / sum(siptw),
+    group_65_74 = sum(siptw[age_group == '65-74']) / sum(siptw),
+    group_75_84 = sum(siptw[age_group == '75-84']) / sum(siptw),
+    group_85_over = sum(siptw[age_group == '>85']) / sum(siptw)
+  )
+
+df_long <- pivot_longer(hist_age_weighted_iptw, cols = c(group_18_24, group_25_34, group_35_44, 
+                                                          group_45_54, group_55_64, group_65_74, group_75_84, group_85_over), 
+                        names_to = "age_group", 
+                        values_to = "proportion")
+
+hist_age_weighted_iptw <- ggplot(df_long, aes(x = factor(dec), y = proportion, fill = age_group)) +
+  geom_bar(stat = "identity", position = "stack") +
+  scale_fill_manual(values = c('#6a00a8', '#9a00b1', '#d53e4f', '#f56864', '#f9a463', '#fdbd22','#f8e4a7', '#E0E0E0'),
+                    labels = c('18-24', '25-34', '35-44', '45-54', '55-64', '65-74', '75-84', '>85')) +
+  facet_wrap(~ trt, labeller = as_labeller(c('snri' = 'SNRI', 'ssri' = 'SSRI'))) + 
+  labs(title = "Age Groups Over Time by Treatment (IPTW)",
+       x = "Interval",
+       y = "Proportion",
+       fill = "Age Group") +
+  theme_minimal() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+
+
+hist_age_weighted_iptw
+ggsave("hist_age_weighted_iptw.png", plot = hist_age_weighted_iptw, width = 6, height = 3, units = "in", bg = 'white')
+
+
+
+hist_age_weighted_combo <- cohort_long %>% # weighted with IPTW + IPCW
+  group_by(trt, dec) %>%
+  summarize(
+    group_18_24 = sum(combo_weight[age_group == '18-24']) / sum(combo_weight),
+    group_25_34 = sum(combo_weight[age_group == '25-34']) / sum(combo_weight),
+    group_35_44 = sum(combo_weight[age_group == '35-44']) / sum(combo_weight),
+    group_45_54 = sum(combo_weight[age_group == '45-54']) / sum(combo_weight),
+    group_55_64 = sum(combo_weight[age_group == '55-64']) / sum(combo_weight),
+    group_65_74 = sum(combo_weight[age_group == '65-74']) / sum(combo_weight),
+    group_75_84 = sum(combo_weight[age_group == '75-84']) / sum(combo_weight),
+    group_85_over = sum(combo_weight[age_group == '>85']) / sum(combo_weight)
+  )
+
+df_long <- pivot_longer(hist_age_weighted_combo, cols = c(group_18_24, group_25_34, group_35_44, 
+                                           group_45_54, group_55_64, group_65_74, group_75_84, group_85_over), 
+                        names_to = "age_group", 
+                        values_to = "proportion")
+
+hist_age_weighted_combo <- ggplot(df_long, aes(x = factor(dec), y = proportion, fill = age_group)) +
+  geom_bar(stat = "identity", position = "stack") +
+  scale_fill_manual(values = c('#6a00a8', '#9a00b1', '#d53e4f', '#f56864', '#f9a463', '#fdbd22','#f8e4a7', '#E0E0E0'),
+                    labels = c('18-24', '25-34', '35-44', '45-54', '55-64', '65-74', '75-84', '>85')) +
+  facet_wrap(~ trt, labeller = as_labeller(c('snri' = 'SNRI', 'ssri' = 'SSRI'))) + 
+  labs(title = "Age Groups Over Time by Treatment (IPTW + IPCW)",
+       x = "Interval",
+       y = "Proportion",
+       fill = "Age Group") +
+  theme_minimal() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+
+
+hist_age_weighted_combo
+ggsave("hist_age_weighted_combo.png", plot = hist_age_weighted_combo, width = 6, height = 3, units = "in", bg = 'white')
+
+
+#### HISTOGRAM OF CENSORING OVER DECILES BY TRT ####
+
+# Proportion of censoring by treatment over time
+hist_cens <- cohort_long %>% # unweighted
+  group_by(trt, dec) %>% 
+  summarize(prop_cens = sum(uncensored_at_tstop == 0) / n(), 
+            prop_uncens = sum(uncensored_at_tstop == 1) / n())
+
+df_long <- pivot_longer(hist_cens, cols = c(prop_cens, prop_uncens), 
+                        names_to = "censoring", 
+                        values_to = "proportion")
+
+hist_cens <- ggplot(df_long, aes(x = factor(dec), y = proportion, fill = censoring)) +
+  geom_bar(stat = "identity", position = "stack") +
+  scale_fill_manual(values = c("#6a00a8", "#f56864"),
+                    labels = c('uncensored', 'censored')) +
+  facet_wrap(~ trt, labeller = as_labeller(c('snri' = 'SNRI', 'ssri' = 'SSRI'))) + 
+  labs(title = "Status Over Time by Treatment",
+       x = "Interval",
+       y = "Proportion",
+       fill = "Status") +
+  theme_minimal() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+
+hist_cens
+ggsave("hist_cens.png", plot = hist_cens, width = 6, height = 3, units = "in", bg = 'white')
+
+hist_cens_weighted <- cohort_long %>% # IPTW + IPCW weighted
+  group_by(trt, dec) %>% 
+  summarize(prop_cens = sum(combo_weight[uncensored_at_tstop == 0]) / sum(combo_weight), 
+            prop_uncens = sum(combo_weight[uncensored_at_tstop == 1]) / sum(combo_weight))
+
+df_long <- pivot_longer(hist_cens_weighted, cols = c(prop_cens, prop_uncens), 
+                        names_to = "censoring", 
+                        values_to = "proportion")
+
+hist_cens_weighted <- ggplot(df_long, aes(x = factor(dec), y = proportion, fill = censoring)) +
+  geom_bar(stat = "identity", position = "stack") +
+  scale_fill_manual(values = c("#6a00a8", "#f56864"),
+                    labels = c('censored', 'uncensored')) +
+  facet_wrap(~ trt, labeller = as_labeller(c('snri' = 'SNRI', 'ssri' = 'SSRI'))) + 
+  labs(title = "Status Over Time by Treatment (IPTW + IPCW)",
+       x = "Interval",
+       y = "Proportion",
+       fill = "Status") +
+  theme_minimal() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+
+hist_cens_weighted
+ggsave("hist_cens_weighted.png", plot = hist_cens_weighted, width = 6, height = 3, units = "in", bg = 'white')
+
+#### HISTOGRAM OF CENSORING BY AGE AND TRT ####
+
+# Proportion of discontinuation by age and treatment group (IPTW  weighted)
+hist_cens_age <- cohort %>% 
+  mutate(age_round = as.factor(round(age_at_entry / 10) * 10)) %>% 
+  group_by(trt, age_round) %>% 
+  summarize(prop_cens = sum(censor == 0) / n(), 
+            prop_uncens = sum(censor == 1) / n())
+
+df_long <- pivot_longer(hist_cens_age, cols = c(prop_cens, prop_uncens), 
+                        names_to = "censoring", 
+                        values_to = "proportion")
+
+df_long$age_round <- factor(df_long$age_round, levels = c(20, 30, 40, 50, 60, 70, 80, 90, 100, 110))
+
+hist_cens_age <- ggplot(df_long, aes(x = factor(age_round), y = proportion, fill = censoring)) +
+  geom_bar(stat = "identity", position = "stack") +
+  scale_fill_manual(values = c("#6a00a8", "#f56864"),
+                    labels = c('uncensored', 'censored')) +
+  facet_wrap(~ trt, labeller = as_labeller(c('snri' = 'SNRI', 'ssri' = 'SSRI'))) + 
+  labs(title = "Status by Age and Treatment",
+       x = "Age",
+       y = "Proportion",
+       fill = "Status") +
+  theme_minimal() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.text.x = element_text(size = 7.5))
+
+hist_cens_age
+ggsave("hist_cens_age.png", plot = hist_cens_age, width = 6, height = 3, units = "in", bg = 'white')
+
+hist_cens_age_weighted <- cohort_long %>% # weighted
+  mutate(age_round = as.factor(round(age_at_entry / 10) * 10)) %>% 
+  group_by(trt, age_round) %>% 
+  summarize(prop_cens = sum(siptw[censor == 0]) / sum(siptw), 
+            prop_uncens = sum(siptw[censor == 1]) / sum(siptw))
+
+df_long <- pivot_longer(hist_cens_age_weighted, cols = c(prop_cens, prop_uncens), 
+                        names_to = "censoring", 
+                        values_to = "proportion")
+
+df_long$age_round <- factor(df_long$age_round, levels = c(20, 30, 40, 50, 60, 70, 80, 90, 100, 110))
+
+hist_cens_age_weighted <- ggplot(df_long, aes(x = factor(age_round), y = proportion, fill = censoring)) +
+  geom_bar(stat = "identity", position = "stack") +
+  scale_fill_manual(values = c("#6a00a8", "#f56864"),
+                    labels = c('censored', 'uncensored')) +
+  facet_wrap(~ trt, labeller = as_labeller(c('snri' = 'SNRI', 'ssri' = 'SSRI'))) + 
+  labs(title = "Status by Age and Treatment (IPTW)",
+       x = "Age",
+       y = "Proportion",
+       fill = "Status") +
+  theme_minimal() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.text.x = element_text(size = 7.5))
+
+hist_cens_age_weighted
+ggsave("hist_cens_age_weighted.png", plot = hist_cens_age_weighted, width = 6, height = 3, units = "in", bg = 'white')
