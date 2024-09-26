@@ -2,7 +2,16 @@
 ##
 ## Program: 10. Create plots
 ##
-## Purpose: Create plots and tables for thesis/publication. 
+## Purpose: Create plots and tables for thesis/publication, including:
+## - Table 1 to describe cohort characteristics
+## - Coefficient of association between a covariate and the outcome over time
+## - IPTW diagnostic balance plots (propensity score density, loveplot)
+## - Weighted cumulative incidence curves for the outcome (by analysis
+## and by censoring model) + zoom in on first 500 days of follow-up
+## - Forest plots of estimated effects by analysis and censoring model
+## - Exploratory plots to understand relationship between age and censoring
+## - Exploratory plots to understand the relationship between baseline
+## depression and censoring
 ## 
 ##
 ## Author: Gwen Aubrac
@@ -39,12 +48,14 @@ library(table1)
 library(writexl)
 library(tidysmd)
 library(tidyr)
+library(gridExtra)
 
 # for analyses
 
 colors_trt = c('#0d0887', '#fdbd22')
 colors_adj = c('#f56864', '#6a00a8')
 
+# list of colors
 '#6a00a8'
 '#9a00b1'
 '#d53e4f'
@@ -206,7 +217,6 @@ tidy_smd(cohort, c(age_group), .group = trt, .wts = c(iptw))
 cohort <- readRDS(file = paste(path_cohort, 'antidepressant_cohort_covariates.rds', sep = '/'))
 
 # choose which variables to plot:
-
 # most common comorbidities:
 base_variables <- c('hypertension_base', 'depression_base', 'hyperlipidemia_base', 'suicidal_ideation_self_harm_base') 
 
@@ -447,14 +457,14 @@ cohort_ref <- cohort %>%
   filter(trt_dummy == 0)
 
 ref_itt <- survfit(Surv(as.numeric(itt_exit_date - entry_date), itt_event) ~ 1, data = cohort_ref)
-ref_itt_siptw <- survfit(Surv(as.numeric(itt_exit_date - entry_date), itt_event) ~ 1, data = cohort_ref, weights = siptw)
+ref_itt_iptw <- survfit(Surv(as.numeric(itt_exit_date - entry_date), itt_event) ~ 1, data = cohort_ref, weights = iptw)
 ref_at <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref)
-ref_at_siptw <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref, weights = siptw)
+ref_at_iptw <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref, weights = iptw)
 
-ref_at_siptw_sipcw_lag <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref, weights = sipcw_lag*siptw)
-ref_at_siptw_sipcw_nonlag <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref, weights = sipcw_nonlag*siptw)
-ref_at_siptw_sipcw_pool <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref, weights = sipcw_pool*siptw)
-ref_at_siptw_sipcw_mod <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref, weights = sipcw_mod*siptw)
+ref_at_iptw_ipcw_lag <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref, weights = ipcw_lag*iptw)
+ref_at_iptw_ipcw_nonlag <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref, weights = ipcw_nonlag*iptw)
+ref_at_iptw_ipcw_pool <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref, weights = ipcw_pool*iptw)
+ref_at_iptw_ipcw_mod <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref, weights = ipcw_mod*iptw)
 
 # ITT vs AT
 
@@ -495,7 +505,7 @@ plot(ref_itt,
      lwd = 2
 )
 
-lines(ref_itt_siptw,
+lines(ref_itt_iptw,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#f56864',
@@ -509,7 +519,7 @@ lines(ref_at,
       lty = 2,
       lwd = 2)
 
-lines(ref_at_siptw,
+lines(ref_at_iptw,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#6a00a8',
@@ -517,7 +527,7 @@ lines(ref_at_siptw,
       lwd = 2)
 
 legend("topleft", 
-       legend = c("ITT", "ITT (sIPTW)", "AT", "AT (sIPTW)"),
+       legend = c("ITT", "ITT (IPTW)", "AT", "AT (IPTW)"),
        col = c('#f56864', '#f56864', '#6a00a8', '#6a00a8'),
        lty = c(2, 1, 2, 1), 
        bty = 'n', 
@@ -536,7 +546,7 @@ par(lab = c(10, 10, 7),
     bty = 'n'
 )
 
-plot(ref_at_siptw_sipcw_lag,
+plot(ref_at_iptw_ipcw_lag,
      fun = function(x) 1 - x,
      ylab = "cumulative probability of death",
      xlab = "days since cohort entry",
@@ -548,28 +558,28 @@ plot(ref_at_siptw_sipcw_lag,
      lwd = 2
 ) 
 
-lines(ref_at_siptw,
+lines(ref_at_iptw,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#6a00a8',
       lty = 2,
       lwd = 2)
 
-lines(ref_at_siptw_sipcw_nonlag,
+lines(ref_at_iptw_ipcw_nonlag,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#d53e4f', 
       lwd = 2
 )
 
-lines(ref_at_siptw_sipcw_pool,
+lines(ref_at_iptw_ipcw_pool,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#f9a463', 
       lwd = 2
 )
 
-lines(ref_at_siptw_sipcw_mod,
+lines(ref_at_iptw_ipcw_mod,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#f9c43d', 
@@ -577,8 +587,8 @@ lines(ref_at_siptw_sipcw_mod,
 )
 
 legend("topleft", 
-       legend = c("AT (sIPTW)", "AT (sIPTW + lagged sIPCW)", "AT (sIPTW + non-lagged sIPCW)", 
-                  "AT (sIPTW + pooled sIPCW)", "AT (sIPTW + modified non-lagged sIPCW"),
+       legend = c("AT (IPTW)", "AT (IPTW + lagged IPCW)", "AT (IPTW + non-lagged IPCW)", 
+                  "AT (IPTW + pooled IPCW)", "AT (IPTW + modified non-lagged IPCW"),
        col = c( '#6a00a8', '#9a00b1', '#d53e4f', '#f9a463', '#f9c43d'),
        lty = c(2, 1, 1, 1, 1), 
        cex = 0.8,
@@ -598,14 +608,14 @@ cohort_comp <- cohort %>%
   filter(trt_dummy == 1)
 
 comp_itt <- survfit(Surv(as.numeric(itt_exit_date-entry_date), itt_event) ~ 1, data = cohort_comp)
-comp_itt_siptw <- survfit(Surv(as.numeric(itt_exit_date-entry_date), itt_event) ~ 1, data = cohort_comp, weights = siptw)
+comp_itt_iptw <- survfit(Surv(as.numeric(itt_exit_date-entry_date), itt_event) ~ 1, data = cohort_comp, weights = iptw)
 comp_at <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp)
-comp_at_siptw <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp, weights = siptw)
+comp_at_iptw <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp, weights = iptw)
 
-comp_at_siptw_sipcw_lag <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp, weights = sipcw_lag*siptw)
-comp_at_siptw_sipcw_nonlag <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp, weights = sipcw_nonlag*siptw)
-comp_at_siptw_sipcw_pool <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp, weights = sipcw_pool*siptw)
-comp_at_siptw_sipcw_mod <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp, weights = sipcw_mod*siptw)
+comp_at_iptw_ipcw_lag <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp, weights = ipcw_lag*iptw)
+comp_at_iptw_ipcw_nonlag <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp, weights = ipcw_nonlag*iptw)
+comp_at_iptw_ipcw_pool <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp, weights = ipcw_pool*iptw)
+comp_at_iptw_ipcw_mod <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp, weights = ipcw_mod*iptw)
 
 # ITT vs AT
 
@@ -628,7 +638,7 @@ plot(comp_itt,
      lwd = 2
 )
 
-lines(comp_itt_siptw,
+lines(comp_itt_iptw,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#f56864',
@@ -642,7 +652,7 @@ lines(comp_at,
       lty = 2,
       lwd = 2)
 
-lines(comp_at_siptw,
+lines(comp_at_iptw,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#6a00a8',
@@ -650,7 +660,7 @@ lines(comp_at_siptw,
       lwd = 2)
 
 legend("topleft", 
-       legend = c("ITT", "ITT (sIPTW)", "AT", "AT (sIPTW)"),
+       legend = c("ITT", "ITT (IPTW)", "AT", "AT (IPTW)"),
        col = c('#f56864', '#f56864', '#6a00a8', '#6a00a8'),
        lty = c(2, 1, 2, 1), 
        bty = 'n', 
@@ -669,7 +679,7 @@ par(lab = c(10, 10, 7),
     bty = 'n'
 )
 
-plot(comp_at_siptw_sipcw_lag,
+plot(comp_at_iptw_ipcw_lag,
      fun = function(x) 1 - x,
      ylab = "cumulative probability of death",
      xlab = "days since cohort entry",
@@ -681,28 +691,28 @@ plot(comp_at_siptw_sipcw_lag,
      lwd = 2
 ) 
 
-lines(comp_at_siptw,
+lines(comp_at_iptw,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#6a00a8',
       lty = 2,
       lwd = 2)
 
-lines(comp_at_siptw_sipcw_nonlag,
+lines(comp_at_iptw_ipcw_nonlag,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#d53e4f', 
       lwd = 2
 )
 
-lines(comp_at_siptw_sipcw_pool,
+lines(comp_at_iptw_ipcw_pool,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#f9a463', 
       lwd = 2
 )
 
-lines(comp_at_siptw_sipcw_mod,
+lines(comp_at_iptw_ipcw_mod,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#f9c43d', 
@@ -710,8 +720,8 @@ lines(comp_at_siptw_sipcw_mod,
 )
 
 legend("topleft", 
-       legend = c("AT (sIPTW)", "AT (sIPTW + lagged sIPCW)", "AT (sIPTW + non-lagged sIPCW)", 
-                  "AT (sIPTW + pooled sIPCW)", "AT (sIPTW + modified non-lagged sIPCW"),
+       legend = c("AT (IPTW)", "AT (IPTW + lagged IPCW)", "AT (IPTW + non-lagged IPCW)", 
+                  "AT (IPTW + pooled IPCW)", "AT (IPTW + modified non-lagged IPCW"),
        col = c( '#6a00a8', '#9a00b1', '#d53e4f', '#f9a463', '#f9c43d'),
        lty = c(2, 1, 1, 1, 1), 
        cex = 0.8,
@@ -737,14 +747,14 @@ cohort_ref <- cohort %>%
   filter(trt_dummy == 0)
 
 ref_itt <- survfit(Surv(as.numeric(itt_exit_date - entry_date), itt_event) ~ 1, data = cohort_ref)
-ref_itt_siptw <- survfit(Surv(as.numeric(itt_exit_date - entry_date), itt_event) ~ 1, data = cohort_ref, weights = siptw)
+ref_itt_iptw <- survfit(Surv(as.numeric(itt_exit_date - entry_date), itt_event) ~ 1, data = cohort_ref, weights = iptw)
 ref_at <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref)
-ref_at_siptw <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref, weights = siptw)
+ref_at_iptw <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref, weights = iptw)
 
-ref_at_siptw_sipcw_lag <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref, weights = sipcw_lag*siptw)
-ref_at_siptw_sipcw_nonlag <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref, weights = sipcw_nonlag*siptw)
-ref_at_siptw_sipcw_pool <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref, weights = sipcw_pool*siptw)
-ref_at_siptw_sipcw_mod <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref, weights = sipcw_mod*siptw)
+ref_at_iptw_ipcw_lag <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref, weights = ipcw_lag*iptw)
+ref_at_iptw_ipcw_nonlag <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref, weights = ipcw_nonlag*iptw)
+ref_at_iptw_ipcw_pool <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref, weights = ipcw_pool*iptw)
+ref_at_iptw_ipcw_mod <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_ref, weights = ipcw_mod*iptw)
 
 # ITT vs AT
 
@@ -788,7 +798,7 @@ plot(ref_itt,
 
 abline(v = times_dec, col = '#f8e4a7', lty = 3, lwd = 1)
 
-lines(ref_itt_siptw,
+lines(ref_itt_iptw,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#f56864',
@@ -802,7 +812,7 @@ lines(ref_at,
       lty = 2,
       lwd = 2)
 
-lines(ref_at_siptw,
+lines(ref_at_iptw,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#6a00a8',
@@ -810,7 +820,7 @@ lines(ref_at_siptw,
       lwd = 2)
 
 legend("topleft", 
-       legend = c("ITT", "ITT (sIPTW)", "AT", "AT (sIPTW)", "intervals"),
+       legend = c("ITT", "ITT (IPTW)", "AT", "AT (IPTW)", "intervals"),
        col = c('#f56864', '#f56864', '#6a00a8', '#6a00a8', '#f8e4a7'),
        lty = c(2, 1, 2, 1, 3), 
        bty = 'n', 
@@ -829,7 +839,7 @@ par(lab = c(10, 10, 7),
     bty = 'n'
 )
 
-plot(ref_at_siptw_sipcw_lag,
+plot(ref_at_iptw_ipcw_lag,
      fun = function(x) 1 - x,
      ylab = "cumulative probability of death",
      xlab = "days since cohort entry",
@@ -844,28 +854,28 @@ plot(ref_at_siptw_sipcw_lag,
 
 abline(v = times_dec, col = '#f8e4a7', lty = 3, lwd = 1)
 
-lines(ref_at_siptw,
+lines(ref_at_iptw,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#6a00a8',
       lty = 2,
       lwd = 2)
 
-lines(ref_at_siptw_sipcw_nonlag,
+lines(ref_at_iptw_ipcw_nonlag,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#d53e4f', 
       lwd = 2
 )
 
-lines(ref_at_siptw_sipcw_pool,
+lines(ref_at_iptw_ipcw_pool,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#f9a463', 
       lwd = 2
 )
 
-lines(ref_at_siptw_sipcw_mod,
+lines(ref_at_iptw_ipcw_mod,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#f9c43d', 
@@ -873,8 +883,8 @@ lines(ref_at_siptw_sipcw_mod,
 )
 
 legend("topleft", 
-       legend = c("AT (sIPTW)", "AT (sIPTW + lagged sIPCW)", "AT (sIPTW + non-lagged sIPCW)", 
-                  "AT (sIPTW + pooled sIPCW)", "AT (sIPTW + modified non-lagged sIPCW", 'intervals'),
+       legend = c("AT (IPTW)", "AT (IPTW + lagged IPCW)", "AT (IPTW + non-lagged IPCW)", 
+                  "AT (IPTW + pooled IPCW)", "AT (IPTW + modified non-lagged IPCW", 'intervals'),
        col = c( '#6a00a8', '#9a00b1', '#d53e4f', '#f9a463', '#f9c43d', '#f8e4a7'),
        lty = c(2, 1, 1, 1, 1, 3), 
        cex = 0.8,
@@ -894,14 +904,14 @@ cohort_comp <- cohort %>%
   filter(trt_dummy == 1)
 
 comp_itt <- survfit(Surv(as.numeric(itt_exit_date-entry_date), itt_event) ~ 1, data = cohort_comp)
-comp_itt_siptw <- survfit(Surv(as.numeric(itt_exit_date-entry_date), itt_event) ~ 1, data = cohort_comp, weights = siptw)
+comp_itt_iptw <- survfit(Surv(as.numeric(itt_exit_date-entry_date), itt_event) ~ 1, data = cohort_comp, weights = iptw)
 comp_at <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp)
-comp_at_siptw <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp, weights = siptw)
+comp_at_iptw <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp, weights = iptw)
 
-comp_at_siptw_sipcw_lag <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp, weights = sipcw_lag*siptw)
-comp_at_siptw_sipcw_nonlag <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp, weights = sipcw_nonlag*siptw)
-comp_at_siptw_sipcw_pool <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp, weights = sipcw_pool*siptw)
-comp_at_siptw_sipcw_mod <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp, weights = sipcw_mod*siptw)
+comp_at_iptw_ipcw_lag <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp, weights = ipcw_lag*iptw)
+comp_at_iptw_ipcw_nonlag <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp, weights = ipcw_nonlag*iptw)
+comp_at_iptw_ipcw_pool <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp, weights = ipcw_pool*iptw)
+comp_at_iptw_ipcw_mod <- survfit(Surv(Tstart, Tstop, event_at_tstop) ~ 1, data = cohort_long_comp, weights = ipcw_mod*iptw)
 
 # ITT vs AT
 
@@ -927,7 +937,7 @@ plot(comp_itt,
 
 abline(v = times_dec, col = '#f8e4a7', lty = 3, lwd = 1)
 
-lines(comp_itt_siptw,
+lines(comp_itt_iptw,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#f56864',
@@ -941,7 +951,7 @@ lines(comp_at,
       lty = 2,
       lwd = 2)
 
-lines(comp_at_siptw,
+lines(comp_at_iptw,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#6a00a8',
@@ -949,7 +959,7 @@ lines(comp_at_siptw,
       lwd = 2)
 
 legend("topleft", 
-       legend = c("ITT", "ITT (sIPTW)", "AT", "AT (sIPTW)", 'intervals'),
+       legend = c("ITT", "ITT (IPTW)", "AT", "AT (IPTW)", 'intervals'),
        col = c('#f56864', '#f56864', '#6a00a8', '#6a00a8', '#f8e4a7'),
        lty = c(2, 1, 2, 1, 3), 
        bty = 'n', 
@@ -968,7 +978,7 @@ par(lab = c(10, 10, 7),
     bty = 'n'
 )
 
-plot(comp_at_siptw_sipcw_lag,
+plot(comp_at_iptw_ipcw_lag,
      fun = function(x) 1 - x,
      ylab = "cumulative probability of death",
      xlab = "days since cohort entry",
@@ -983,28 +993,28 @@ plot(comp_at_siptw_sipcw_lag,
 
 abline(v = times_dec, col = '#f8e4a7', lty = 3, lwd = 1)
 
-lines(comp_at_siptw,
+lines(comp_at_iptw,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#6a00a8',
       lty = 2,
       lwd = 2)
 
-lines(comp_at_siptw_sipcw_nonlag,
+lines(comp_at_iptw_ipcw_nonlag,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#d53e4f', 
       lwd = 2
 )
 
-lines(comp_at_siptw_sipcw_pool,
+lines(comp_at_iptw_ipcw_pool,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#f9a463', 
       lwd = 2
 )
 
-lines(comp_at_siptw_sipcw_mod,
+lines(comp_at_iptw_ipcw_mod,
       fun = function(x) 1 - x,
       conf.int = FALSE, 
       col = '#f9c43d', 
@@ -1012,8 +1022,8 @@ lines(comp_at_siptw_sipcw_mod,
 )
 
 legend("topleft", 
-       legend = c("AT (sIPTW)", "AT (sIPTW + lagged sIPCW)", "AT (sIPTW + non-lagged sIPCW)", 
-                  "AT (sIPTW + pooled sIPCW)", "AT (sIPTW + modified non-lagged sIPCW", 'intervals'),
+       legend = c("AT (IPTW)", "AT (IPTW + lagged IPCW)", "AT (IPTW + non-lagged IPCW)", 
+                  "AT (IPTW + pooled IPCW)", "AT (IPTW + modified non-lagged IPCW", 'intervals'),
        col = c( '#6a00a8', '#9a00b1', '#d53e4f', '#f9a463', '#f9c43d', '#f8e4a7'),
        lty = c(2, 1, 1, 1, 1, 3), 
        cex = 0.8,
@@ -1440,7 +1450,6 @@ ggsave("censor_dist_d9.png", plot = censor_d9, width = 4, height = 4, units = "i
 censor_d10 <- plot_censoring_distribution(cens_d10, censor_time, count, "Censoring in Interval 10")
 ggsave("censor_dist_d10.png", plot = censor_d10, width = 4, height = 4, units = "in", bg = 'white')
 
-library(gridExtra)
 grid_cens_plots <- grid.arrange(censor_d1, censor_d2, censor_d3, censor_d4, censor_d5, 
              censor_d6, censor_d7, censor_d8, censor_d9, censor_d10, ncol=2)
 ggsave("grid_cens_plots.png", plot = grid_cens_plots, width = 8, height = 10, units = "in", bg = 'white')
@@ -1635,15 +1644,15 @@ ggsave("forest_plot_IRR_stab.png", plot = combined_plot, width = 6, height = 3, 
 dev.off()
 
 
-#### HISTOGRAM OF AGE OVER DECILES BY TRT ####
+#### HISTOGRAM OF AGE OVER TIME BY TRT ####
 
-# Proportion young and old by decile - percentile age groups
+# Proportion young and old by interval - percentile age groups
 cohort_long <- readRDS(file = paste(path_cohort, 'antidepressant_cohort_ipcw.rds', sep = '/'))
 
 age_dist <- quantile(cohort$age_at_entry, probs = c(0.25, 0.5, 0.75))
 age_dist
 
-cohort_long %<>% mutate(combo_weight = siptw*sipcw_pool,
+cohort_long %<>% mutate(combo_weight = iptw*ipcw_pool,
                         age_25 = if_else(age_at_entry < age_dist[[1]], 1 , 0),
                         age_25_50 = if_else(age_at_entry >= age_dist[[1]] & age_at_entry < age_dist[[2]], 1, 0),
                         age_50_75 = if_else(age_at_entry >= age_dist[[2]] & age_at_entry < age_dist[[3]], 1, 0),
@@ -1707,7 +1716,7 @@ ggsave("hist_age_perc_weighted.png", plot = hist_age_perc_weighted, width = 6, h
 
 # Proportion young and old by decile - age groups
 cohort_long <- readRDS(file = paste(path_cohort, 'antidepressant_cohort_ipcw.rds', sep = '/'))
-cohort_long %<>% mutate(combo_weight = siptw*sipcw_pool)
+cohort_long %<>% mutate(combo_weight = iptw*ipcw_pool)
 
 hist_age <- cohort_long %>% 
   group_by(trt, dec) %>% 
@@ -1816,7 +1825,7 @@ hist_age_weighted_combo
 ggsave("hist_age_weighted_combo.png", plot = hist_age_weighted_combo, width = 6, height = 3, units = "in", bg = 'white')
 
 
-#### HISTOGRAM OF CENSORING OVER DECILES BY TRT ####
+#### HISTOGRAM OF CENSORING OVER TIME BY TRT ####
 
 # Proportion of censoring by treatment over time
 hist_cens <- cohort_long %>% # unweighted
@@ -1871,7 +1880,7 @@ ggsave("hist_cens_weighted.png", plot = hist_cens_weighted, width = 6, height = 
 
 #### HISTOGRAM OF CENSORING BY AGE AND TRT ####
 
-# Proportion of discontinuation by age and treatment group (IPTW  weighted)
+# Proportion of discontinuation by age and treatment group
 hist_cens_age <- cohort %>% 
   mutate(age_round = as.factor(round(age_at_entry / 10) * 10)) %>% 
   group_by(trt, age_round) %>% 
@@ -1904,8 +1913,8 @@ ggsave("hist_cens_age.png", plot = hist_cens_age, width = 6, height = 3, units =
 hist_cens_age_weighted <- cohort_long %>% # weighted
   mutate(age_round = as.factor(round(age_at_entry / 10) * 10)) %>% 
   group_by(trt, age_round) %>% 
-  summarize(prop_cens = sum(siptw[censor == 0]) / sum(siptw), 
-            prop_uncens = sum(siptw[censor == 1]) / sum(siptw))
+  summarize(prop_cens = sum(iptw[censor == 0]) / sum(iptw), 
+            prop_uncens = sum(iptw[censor == 1]) / sum(iptw))
 
 df_long <- pivot_longer(hist_cens_age_weighted, cols = c(prop_cens, prop_uncens), 
                         names_to = "censoring", 
@@ -1929,3 +1938,148 @@ hist_cens_age_weighted <- ggplot(df_long, aes(x = factor(age_round), y = proport
 
 hist_cens_age_weighted
 ggsave("hist_cens_age_weighted.png", plot = hist_cens_age_weighted, width = 6, height = 3, units = "in", bg = 'white')
+
+#### HISTOGRAM OF BASELINE DEPRESSION BY AGE GROUP ####
+
+cohort <- readRDS(file = paste(path_cohort, 'antidepressant_cohort_iptw.rds', sep = '/'))
+cohort %<>% mutate(binary_age_grp = if_else(age_at_entry >= 65, 'patients ≥65', 'patients <65'))
+
+depression_by_age <- cohort %>% # unweighted
+  group_by(trt, binary_age_grp) %>% 
+  summarize(prop_dep = sum(depression_base == 1) / n(), 
+            prop_no_dep = sum(depression_base == 0) / n())
+
+depression_by_age_iptw <- cohort %>% # weighted (iptw only)
+  group_by(trt, binary_age_grp) %>% 
+  summarize(prop_dep = sum(iptw[depression_base==1]) / sum(iptw), 
+            prop_no_dep = sum(iptw[depression_base==0]) / sum(iptw))
+
+depression_by_age_long <- pivot_longer(depression_by_age, cols = c(prop_dep, prop_no_dep), 
+                        names_to = "depression_status", 
+                        values_to = "proportion")
+
+depression_by_age_iptw_long <- pivot_longer(depression_by_age_iptw, cols = c(prop_dep, prop_no_dep), 
+                                                names_to = "depression_status", 
+                                                values_to = "proportion")
+
+hist_depression_by_age <- ggplot(depression_by_age_long, aes(x = factor(binary_age_grp), y = proportion, fill = depression_status)) +
+  geom_bar(stat = "identity", position = "stack") +
+  scale_fill_manual(values = c("#6a00a8", "#f9a463"),
+                    labels = c('Depression', 'No depression')) +
+  facet_wrap(~ trt, labeller = as_labeller(c('snri' = 'SNRI', 'ssri' = 'SSRI'))) + 
+  labs(title = "Patients with Baseline Depression by Treatment",
+       x = "Age group",
+       y = "Proportion",
+       fill = "Baseline Depression") +
+  theme_minimal() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+hist_depression_by_age
+
+ggsave("hist_depression_by_age.png", plot = hist_depression_by_age, width = 6, height = 3, units = "in", bg = 'white')
+
+
+hist_depression_by_age_iptw <- ggplot(depression_by_age_iptw_long, aes(x = factor(binary_age_grp), y = proportion, fill = depression_status)) +
+  geom_bar(stat = "identity", position = "stack") +
+  scale_fill_manual(values = c("#6a00a8", "#f9a463"),
+                    labels = c('Depression', 'No depression')) +
+  facet_wrap(~ trt, labeller = as_labeller(c('snri' = 'SNRI', 'ssri' = 'SSRI'))) + 
+  labs(title = "Patients with Baseline Depression by Treatment (IPTW)",
+       x = "Age group",
+       y = "Proportion",
+       fill = "Baseline Depression") +
+  theme_minimal() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+hist_depression_by_age_iptw
+
+ggsave("hist_depression_by_age_iptw.png", plot = hist_depression_by_age_iptw, width = 6, height = 3, units = "in", bg = 'white')
+
+#### HISTOGRAM OF BASELINE DEPRESSION OVER TIME BY TREATMENT ####
+
+cohort_long <- readRDS(file = paste(path_cohort, 'antidepressant_cohort_ipcw.rds', sep = '/'))
+cohort_long %<>% mutate(combo_weight = iptw*ipcw_pool)
+
+dep_over_time <- cohort_long %>% 
+  group_by(trt, dec) %>% 
+  summarize(prop_dep = sum(depression_base == 1) / n(), 
+            prop_no_dep = sum(depression_base ==  0) / n()
+  )
+
+dep_over_time_long <- pivot_longer(dep_over_time, cols = c(prop_dep, prop_no_dep), 
+                        names_to = "depression_status", 
+                        values_to = "proportion")
+
+hist_dep_over_time <- ggplot(dep_over_time_long, aes(x = factor(dec), y = proportion, fill = depression_status)) +
+  geom_bar(stat = "identity", position = "stack") +
+  scale_fill_manual(values = c('#6a00a8', '#f9a463'),
+                    labels = c('Depression', 'No depression')) +
+  facet_wrap(~ trt, labeller = as_labeller(c('snri' = 'SNRI', 'ssri' = 'SSRI'))) + 
+  labs(title = "Baseline Depression Over Time by Treatment",
+       x = "Interval",
+       y = "Proportion",
+       fill = "Depression status") +
+  theme_minimal() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+
+hist_dep_over_time
+ggsave("hist_dep_over_time.png", plot = hist_dep_over_time, width = 6, height = 3, units = "in", bg = 'white')
+
+
+
+dep_over_time_iptw <- cohort_long %>% # weighted with IPTW only
+  group_by(trt, dec) %>%
+  summarize(
+    prop_dep = sum(iptw[depression_base == 1]) / sum(iptw),
+    prop_no_dep = sum(iptw[depression_base == 0]) / sum(iptw)
+  )
+
+dep_over_time_iptw_long <- pivot_longer(dep_over_time_iptw, cols = c(prop_dep, prop_no_dep), 
+                        names_to = "depression_status", 
+                        values_to = "proportion")
+
+hist_dep_over_time_iptw <- ggplot(dep_over_time_iptw_long, aes(x = factor(dec), y = proportion, fill = depression_status)) +
+  geom_bar(stat = "identity", position = "stack") +
+  scale_fill_manual(values = c('#6a00a8', '#f9a463'),
+                    labels = c('Depression', 'No depression')) +
+  facet_wrap(~ trt, labeller = as_labeller(c('snri' = 'SNRI', 'ssri' = 'SSRI'))) + 
+  labs(title = "Baseline Depression Over Time by Treatment (IPTW)",
+       x = "Interval",
+       y = "Proportion",
+       fill = "Depression status") +
+  theme_minimal() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+
+hist_dep_over_time_iptw
+ggsave("hist_dep_over_time_iptw.png", plot = hist_dep_over_time_iptw, width = 6, height = 3, units = "in", bg = 'white')
+
+
+
+dep_over_time_weighted <- cohort_long %>% # weighted with IPTW + IPCW
+  group_by(trt, dec) %>%
+  summarize(
+    prop_dep = sum(combo_weight[depression_base == 1]) / sum(combo_weight),
+    prop_no_dep = sum(combo_weight[depression_base == 0]) / sum(combo_weight)
+  )
+
+dep_over_time_weighted_long <- pivot_longer(dep_over_time_weighted, cols = c(prop_dep, prop_no_dep), 
+                                        names_to = "depression_status", 
+                                        values_to = "proportion")
+
+hist_dep_over_time_weighted <- ggplot(dep_over_time_weighted_long, aes(x = factor(dec), y = proportion, fill = depression_status)) +
+  geom_bar(stat = "identity", position = "stack") +
+  scale_fill_manual(values = c('#6a00a8', '#f9a463'),
+                    labels = c('Depression', 'No depression')) +
+  facet_wrap(~ trt, labeller = as_labeller(c('snri' = 'SNRI', 'ssri' = 'SSRI'))) + 
+  labs(title = "Baseline Depression Over Time by Treatment (IPTW + IPCW)",
+       x = "Interval",
+       y = "Proportion",
+       fill = "Depression status") +
+  theme_minimal() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+
+hist_dep_over_time_weighted
+ggsave("hist_dep_over_time_weighted.png", plot = hist_dep_over_time_weighted, width = 6, height = 3, units = "in", bg = 'white')

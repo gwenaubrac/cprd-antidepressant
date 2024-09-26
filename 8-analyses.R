@@ -184,6 +184,7 @@ cox_itt <- coxph(
   robust = TRUE
 )
 
+# check the proportinal hazard assumption visually and with test
 ph <- cox.zph(cox_itt, transform="km", terms=TRUE, singledf=FALSE, global=TRUE) # check proportional hazard assumption, all p-values should be large (>0.05)
 ph
 

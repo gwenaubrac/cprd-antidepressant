@@ -3,7 +3,7 @@
 ## Program: 2. Censoring
 ##
 ## Purpose: Identify the date for the following censoring events in the as-treated analysis:
-## 1. Patients are censored when there is a 30+ day gap (or otherwise defined grace period) in the treatment class that led to cohort entry.
+## 1. Patients are censored when there is a 30+ day gap in the treatment class that led to cohort entry.
 ## 2. Patients are censored at the date they switch to another treatment for the same indication (identified in previous program).
 ##
 ##
@@ -16,7 +16,8 @@
 ## Notes: The grace period defines the number of days for what is considered a gap in treatment supply
 ## and can be adapted to be more or less conservative.
 ##
-## Algorithm used to define treatment duration was developed by Pauline Reynier at the Lady Davis Institute. 
+## To improve the accuracy of prescription duration, an algorithm developed by Pauline Reynier
+## at the Lady Davis Institute was used to compute rx duration based on days' supply. 
 ##
 ## ---------------------------
 
@@ -52,6 +53,7 @@ cat(paste("Date:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), '\n'), file = censor
 
 # This algorithm to define treatment duration in the CPRD was developed by Pauline Reynier at the Lady Davis Institute
 
+# file with information on dosage and duration for CPRD products
 common_dosages <- fread('Z:/EPI/Protocol 24_004042/202406_lookup/202406_Lookups_CPRDAurum/202406_Lookups_CPRDAurum/common_dosages.txt')
 common_dosages %<>% select(dosageid, dosage_text, daily_dose)
 summary(rx_for_exposure$duration == 0)
@@ -383,14 +385,14 @@ summary_rx_duration <- rx_for_exposure %>%
   arrange(desc(count))
 
 write_xlsx(summary_rx_duration, paste(path_cohort, 'summary_rx_duration.xlsx', sep ='/'))
+
+# save dataframe with updated rx duration as 'rx_for_exposure_with_duration'
 saveRDS(rx_for_exposure, file = paste(path_cohort, 'rx_for_exposure_with_duration.rds', sep='/'))
 rx_for_exposure <- readRDS(file = paste(path_cohort, 'rx_for_exposure_with_duration.rds', sep='/'))
 
 #### DEFINE GRACE PERIOD ####
 
 # grace period: number of days for gap to be considered trt discontinuation
-#readRDS(paste(path_cohort, 'rx_for_exposure_with_duration.rds', sep='/'))
-
 grace_period <- 30
 
 #### CENSORING DUE TO TREATMENT DISCONTINUATION ####
@@ -417,6 +419,8 @@ trt_supply <- trt_supply %>%
           gap_in_supply = date - lag(supply_end), # gap between current rx and end of supply from previous rx
           max_refills = max(refill_number, na.rm = TRUE)) # total number of refills for each patient
 
+# save dataframe with rx (with updated durations) + days between supplies 
+# to be used in sensitivity analyses as well
 saveRDS(trt_supply, file = paste(path_cohort, 'trt_supply_raw.rds', sep='/'))
 # trt_supply <- readRDS(file = paste(path_cohort, 'trt_supply_raw.rds', sep = '/'))
 

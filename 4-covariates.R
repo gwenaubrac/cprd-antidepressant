@@ -3,10 +3,12 @@
 ## Program: 4. Define covariates
 ##
 ## Purpose: Update the cohort with values of covariates and comorbidities at study entry 
-## and at the quartiles of the censoring distribution ('cohort_with_covariates'). 
-## Censoring for the distribution of censoring times can be for any reason, 
-# i.e. event, death, switch, discontinuation, linkage end, departure from CPRD...
-## which is captured in at_exit_date. 
+## and at the intervals of the censoring distribution ('cohort_with_covariates'): 
+## - Censoring distribution is based on censoring due to treatment switch or discontinuation.
+## - Follow-up intervals are based on deciles of the censoring distribution ('dec') but adapted
+## to better represent data. 
+## - Patients with missing sex were removed from analyses.
+## - Missing ethnicity or deprivation index were recategorized as 'Unknown'.
 ##
 ## Comorbidities are assessed from both CPRD and HES. 
 ##
@@ -17,8 +19,7 @@
 ## ---------------------------
 ##
 ## Notes: 
-## 1. Baseline and quartile dates are relative to each patient (and not to the study timeline).
-## Quartiles are based on the number of days of follow-up from the overall follow-up distribution.
+## 1. Baseline and interval dates are relative to each patient (and not to the study timeline).
 ## Relative dates are calculated based on each patient's entry date.
 ##
 ## 2. The folder for comorbidity codes should contain separate excel files for each comorbidity. 
@@ -26,7 +27,7 @@
 ## will be named 'Q1_comorb', 'Q2_comorb' ... with the respective 'comorb' name. 
 ##
 ## 3.The occurrence of comorbidities is assessed based on CPRD and HES. The date of first
-## occurrence of the comorbidity is used to define the presence of the comorbidity in the cohort. 
+## occurrence of the comorbidity is used to define the presence of that comorbidity. 
 ##
 ## ---------------------------
 
@@ -107,6 +108,7 @@ summary(cohort$age_group)
 length(which(is.na(cohort$age_group)))
 
 # ethnicity
+# read linked HES data
 col_classes <- c("character", "character", "character", "character")
 ethnicity1 <- fread(paste(path_linkage_1, 'hes_patient_24_004042_DM.txt', sep = '/'), colClasses = col_classes)
 ethnicity2 <- fread(paste(path_linkage_2, 'hes_patient_24_004042_DM.txt', sep = '/'), colClasses = col_classes)
@@ -128,6 +130,7 @@ cohort %<>% mutate(ethnicity = if_else(ethnicity == '', NA, ethnicity)) # replac
 summary(cohort$ethnicity)
 
 # deprivation index
+# read linked Small Area Data
 col_classes <- c("character", "character", "character")
 deprivation1 <- fread(paste(path_linkage_1, 'patient_2019_imd_24_004042.txt', sep = '/'), colClasses = col_classes)
 deprivation2 <- fread(paste(path_linkage_2, 'patient_2019_imd_24_004042.txt', sep = '/'), colClasses = col_classes)
@@ -152,7 +155,7 @@ summary(cohort$deprivation)
 
 ## Set up 
 
-# define deciles of censoring distribution in follow-up counting time
+# define intervals of censoring distribution in follow-up counting time
 censored_only <- cohort %>%
   filter(!is.na(censor_date))
 
@@ -160,7 +163,7 @@ censoring_times <- as.numeric(censored_only$censor_date - censored_only$entry_da
 quantile(censoring_times, probs = seq(0, 1, by = 0.05))
 cat(paste('The distribution of censoring times is:', quantile(censoring_times, probs = seq(0, 1, by = 0.05)), '\n'), file = cov_desc, append = TRUE)
 
-# there is a concentration of censoring at 58 days (d1 = d2 = d3)
+# there is a concentration of censoring at 58 days
 # so let us split data into deciles starting from the 3rd decile (~35%)
 # to be more flexible
 breaks <- round(seq(from = 0.35, to = 1, length.out = 10), 2)
@@ -177,11 +180,11 @@ length(which(censoring_times == times_dec[[1]]))
 times_dec[[1]] <- 59
 times_dec
 
-# # and 119 days (for 90-day grace)
+# # and 119 days (for 90-day grace period)
 # times_dec[[1]] <- 119
 # times_dec
 # 
-# # and 57 days (for flexible grace)
+# # and 57 days (for flexible grace period)
 # times_dec[[1]] <- 57
 # times_dec
 

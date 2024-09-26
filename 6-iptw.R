@@ -96,6 +96,7 @@ comorbidities <- readRDS(file = paste(path_main, 'comorbidities.rds', sep = '/')
 base_comorb <- readRDS(file = paste(path_main, 'base_comorb.rds', sep = '/'))
 dec_comorb <- readRDS(file = paste(path_main, 'dec_comorb.rds', sep = '/'))
 
+# remove covariates that violate positivity assumption
 comorbidities <- comorbidities[!comorbidities %in% c('hypocalcemia', 'hypomagnesemia', 'acute_renal_disease')]
 base_comorb <- base_comorb[!base_comorb %in% c('hypocalcemia_base', 'hypomagnesemia_base', 'acute_renal_disease_base')]
 dec_comorb <- dec_comorb[!dec_comorb %in% c('hypocalcemia_d1', 'hypomagnesemia_d1', 'acute_renal_disease_d1',

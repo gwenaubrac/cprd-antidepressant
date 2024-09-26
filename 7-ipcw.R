@@ -2,14 +2,16 @@
 ##
 ## Program: 7. IPCW
 ##
-## Purpose: Calculate inverse probability of censoring weights at each decile of the censoring
+## Purpose: Calculate inverse probability of censoring weights at each interval of the censoring
 ## distribution, with updated values for the covariates. Four different methods are compared:
-## 1) Lagged weights: probability of being uncensored is predicted based on data from the previous decile (icpw)
-## 2) Non-lagged weights: probability of being uncensored is predicted based on data from the current decile (ipcw_nl)
-## 3) Pooled weights: the probability of being uncensored is predicted on entire data based on pooled model
-## that includes a term for the decile. 
+## 1) Non-lagged weights: stratified probability of being uncensored by start of current interval (icpw)
+## is used to compute the weights.
+## 2) Lagged weights: stratified probability of being uncensored by start of previous interval (ipcw_nl)
+## is used to compute the weights.
+## 3) Pooled weights: probability of being uncensored is based on pooled model that includes a term for the interval
+## is used to compute the weights.
 ## 4) Modified non-lagged weights: same as non-lagged weights, except each patient receives an ipcw of 1
-## for the first decile to account for the fact that most censoring in first decile occurred at end of interval.
+## for the first interval to account for the fact that most censoring in first interval occurred at end of interval.
 ##
 ##
 ## Author: Gwen Aubrac
@@ -121,6 +123,7 @@ if (analysis == 'male' | analysis == 'female') {
 
 variables
 
+# remove variables that violate positivity assumption
 base_variables <- c(covariates, base_comorb)
 base_variables <- base_variables[!base_variables %in% c('hypocalcemia_d1', 'hypomagnesemia_d1', 'acute_renal_disease_d1',
                                             'hypocalcemia_d2', 'hypomagnesemia_d2', 'acute_renal_disease_d1',
@@ -159,7 +162,7 @@ write_xlsx(tidy(predictors_disc), paste(path_results, 'predictors_disc.xlsx', se
 predictors_cens <- glm(reformulate(base_variables, 'censor'), data = cohort, family = binomial())
 write_xlsx(tidy(predictors_cens), paste(path_results, 'predictors_cens.xlsx', sep ='/'))
 
-# treatment-specific probability of censoring
+# treatment-specific predictors of censoring
 cohort_snri <- cohort %>% filter(trt == 'snri')
 predictors_cens_snri <- glm(reformulate(base_variables, 'censor'), data = cohort_snri, family = binomial())
 write_xlsx(tidy(predictors_cens_snri), paste(path_results, 'predictors_cens_snri.xlsx', sep ='/'))
@@ -237,6 +240,7 @@ cohort_long %<>%
   arrange(id, dec) %>% 
   ungroup()
 
+# define formula for stratified and pooled censoring models
 p_uncens_formula <- as.formula(paste('uncensored_at_tstop', "~", paste(c(variables, 'age_group*depression'), collapse = " + ")))
 p_uncens_formula_pooled <- as.formula(paste('uncensored_at_tstop', "~", paste(c(variables, 'age_group*depression', 'dec'), collapse = " + ")))
 
@@ -310,7 +314,7 @@ cat(paste('Stabilized non-lagged IPCW weights: \n min:', min(cohort_long$sipcw_n
 
 #### POOLED WEIGHTS ####
 
-# function to get parametric probability of uncensored by next interval
+# function to get pooled parametric probability of uncensored
 fit_and_predict_pooled <- function(data_subset) {
   model <- glm(p_uncens_formula_pooled,
                family = binomial(link = "logit"),
@@ -353,7 +357,7 @@ cat(paste('Stabilized pooled IPCW weights: \n min:', min(cohort_long$sipcw_pool)
 
 #### NON-LAGGED MODEL MODIFIED Q1 WEIGHTS ####
 
-# modify weight for d1 to be 1 to account for lots of censoring happening at end of d1
+# modify weight for d1 to be 1 to account for lots of censoring happening at end of interval 1
 cohort_long <- cohort_long %>%
   group_by(id) %>% 
   mutate (ipcw_mod = if_else(row_number() == 1, 1, ipcw_nonlag),

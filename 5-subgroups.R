@@ -6,6 +6,7 @@
 ## 1. Male vs Female
 ## 2. Year of cohort entry (2019, 2020, 2021, 2022)
 ## 3. Age group (<65, >=65)
+## 4. Depression at baseline (yes or no).
 ##  
 ##
 ## Author: Gwen Aubrac

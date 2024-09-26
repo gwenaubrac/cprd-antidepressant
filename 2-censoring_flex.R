@@ -42,6 +42,7 @@ cat(paste("Date:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), '\n'), file = censor
 
 #### SENSITIVITY ANALYSIS: FLEXIBLE GRACE PERIOD ####
 # The grace period for each patient is set to be the duration of the supply for each rx
+# And changes with each new rx
 
 trt_supply_flex <- readRDS(file = paste(path_main, 'trt_supply_raw.rds', sep = '/'))
 summary(trt_supply_flex$date)

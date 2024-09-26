@@ -4,16 +4,16 @@
 ##
 ## Purpose: Flag the occurrence and date of first occurrence of the outcome of interest since cohort entry.
 ## Here, the outcome is all-cause mortality, where date of death (dod) is the earliest among:
-## Emis dod, CPRD dod, HES dod, and ONS dod. 
+## Emis dod, CPRD dod, and ONS dod. 
 ## 
 ## Define follow-up for the two following analyses types: 
 ## - intention-to-treat analysis (ITT): patients are analyzed according to their original 
 ## exposure group. Follow-up ends at the earliest among: death ('dod'), occurrence of the event 
-## of interest ('event_date'), departure from the CPRD ('regend'), end of linkage to HES or ONS, 
+## of interest ('event_date'), departure from the CPRD ('regend'),  
 ## last available data ('lcd'), or study follow-up end ('study_follow_up_end')
 ## - as-treated: patients are analyzed according to their actual exposure group, and are thus
 ## censored when they switch or discontinue their treatment. Follow-up ends at the earliest among
-## the above plus treatment switch ('switch_date') or treatment discontinuation ('disc_date'). 
+## the above for ITT plus treatment switch ('switch_date') or treatment discontinuation ('disc_date'). 
 ##
 ## Author: Gwen Aubrac
 ##
@@ -72,7 +72,8 @@ cat(paste("Date:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), '\n'), file = outcom
 
 #### A. DEFINE ALL-CAUSE MORTALITY/DATE OF DEATH ####
 
-# merge with ONS dod
+## Merge with ONS dod
+# read and format ONS data
 col_classes <- c("character", "character", "character", "character", "character", "character", "character", "character")
 death_ons1 <- fread(paste(path_linkage_1, 'death_patient_24_004042_DM.txt', sep = '/'), colClasses = col_classes)
 death_ons2 <- fread(paste(path_linkage_2, 'death_patient_24_004042_DM.txt', sep = '/'), colClasses = col_classes)
@@ -91,6 +92,7 @@ cohort <- merge(cohort, death_ons, by.x = 'id', by.y = 'patid', all.x = TRUE)
 
 cohort$ons_dod <- dmy(cohort$ons_dod)
 
+# determine how many ONS and CPRD date of death records match
 dod_match <- cohort %>% 
   select(id, emis_dod, cprd_dod, ons_dod) %>% 
   mutate(same_dod = if_else(!is.na(emis_dod) & emis_dod == cprd_dod &
@@ -106,7 +108,7 @@ length(which(dod_match$no_ons_dod == 1))
 cat(paste('Missing ONS dod with EMIS or CPRD dod:', length(which(dod_match$no_ons_dod == 1)) , '\n'), file = outcome_desc, append= TRUE)
 
 
-# set dod as earliest among CORD, and ONS
+# set dod as earliest among CPRD, and ONS
 cohort$dod <- pmin(
   cohort$emis_dod,
   cohort$cprd_dod,

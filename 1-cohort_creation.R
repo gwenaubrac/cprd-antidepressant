@@ -16,7 +16,8 @@
 ## - Less than 18 years old at cohort entry
 ## - Less than 365 days of look-back available in the database from cohort entry (based on regstart - patient regiment start)
 ## - Less than 365 days of follow-up available in the database since cohort entry (based on lcd - last practice collection date)
-
+## - No linkage to HES or ONS
+##
 ## Author: Gwen Aubrac
 ##
 ## Date Created: 2024-07-22
@@ -51,8 +52,8 @@ path_cprdA <- "Z:/EPI/Protocol 24_004042/dataA"
 path_cprdB <- "Z:/EPI/Protocol 24_004042/dataB" 
 path_cprdC <- "Z:/EPI/Protocol 24_004042/dataC (no followup)" 
 path_exposure <- "Z:/EPI/Protocol 24_004042/Gwen/data/exposures/antidepressants" # folder containing separate excel for exposures
-path_linkage_1 <- 'Z:/EPI/Protocol 24_004042/Data linkage/Results/Aurum_linked/Final_pt1'
-path_linkage_2 <- 'Z:/EPI/Protocol 24_004042/Data linkage/Results/Aurum_linked/Final_pt2'
+path_linkage_1 <- 'Z:/EPI/Protocol 24_004042/Data linkage/Results/Aurum_linked/Final_pt1' # folder containing linked data (HES and ONS)
+path_linkage_2 <- 'Z:/EPI/Protocol 24_004042/Data linkage/Results/Aurum_linked/Final_pt2' # folder containing linked data (HES and ONS)
 setwd(path_cohort)
 
 # create note to keep track of cohort creation numbers
@@ -392,7 +393,7 @@ cat(paste('Number of patients with >=365 days follow-up who did not die prior to
 
 cohort %<>% select(-dod)
 
-## 4. Apply exclusion criteria (4): linkage to HES and ONS
+## 4. Apply exclusion criteria (4): no linkage to HES and ONS
 
 linkage_eligible_ids <- linkage_eligibility %>% 
   filter(ons_death_e == 1 &

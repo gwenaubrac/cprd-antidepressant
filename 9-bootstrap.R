@@ -3,6 +3,8 @@
 ## Program: 9. Bootstrapping 
 ##
 ## Purpose: Bootstrap cohort to obtain percentile confidence intervals for IR, IRR, and IRD.
+## Analyses from the 8-analyses program are replicated, but written in more efficient
+## code to speed up computation time (using for example data.table and fastglm packages).
 ##
 ## Author: Gwen Aubrac
 ##
@@ -10,9 +12,18 @@
 ##
 ## ---------------------------
 ##
-## Notes: Confidence intervals constructed using boot (bootstrap_results_boot, bootstrap_results_manual to save along iterations).
-## Computation speed was compared with future (bootstrap_results_future).
+## Notes:
+## 1. Confidence intervals constructed using boot::boot
+## (saved as bootstrap_results_boot and bootstrap_results_manual to save along iterations).
 ##
+## 2. Additional covariates were removed as they violated the positivity assumption
+## in a large proportion of bootstraps: cardiomyopathy and hypokalemia. 
+##
+## 3. Bootstrapping using different packages (e.g., future) was compared, but the one from 
+## the boot package performed best.
+##
+## 4. Ethnicity was recategorized as 'White', 'Non-White' and 'Unknown' because
+## ethnicity categories violated the positivity assumption. 
 ## ---------------------------
 
 # analysis: flex_grace_period, 90_day_grace_period
@@ -116,9 +127,15 @@ predictors <- as.formula(paste('~', as.character(model)[-1][2], sep = ''))
 predictors
 
 p_uncens_predictors <- as.formula(paste("~", paste(c(variables, 'age_group*depression'), collapse = " + ")))
+if (analysis == 'depressed' | analysis == 'not_depressed') {
+  p_uncens_predictors <- as.formula(paste("~", paste(c(variables), collapse = " + ")))
+}
 p_uncens_predictors
 
 p_uncens_predictors_pooled <- as.formula(paste("~", paste(c(variables, 'age_group*depression', 'dec'), collapse = " + ")))
+if (analysis == 'depressed' | analysis == 'not_depressed') {
+  p_uncens_predictors_pooled <- as.formula(paste("~", paste(c(variables, 'dec'), collapse = " + ")))
+}
 p_uncens_predictors_pooled
 
 fit_and_predict <- function(data_subset) {
@@ -165,7 +182,7 @@ bs <- function(data, indices) {
   
   #### 1. CALCUALTE IPTW ####
   
-  d$one <- 1
+  d$one <- 1 # create variable for 'no predictor' for marginal probability of treatment
   y <- as.numeric(as.character(d$trt_dummy))
   x_denom <- model.matrix(predictors, data = d)
   x_num <- model.matrix(~one, data = d)
@@ -1212,7 +1229,7 @@ bs <- function(data, indices) {
 
 #### BOOTSTRAP EXECUTION USING BOOT ####
 
-set.seed(1)
+set.seed(1) # for reproducibility
 R = 1000
 
 result_names <- readRDS(file = paste(path_main, 'result_names.rds', sep='/'))
@@ -1220,7 +1237,7 @@ bootstrap_results_manual <- data.frame(matrix(nrow = 1, ncol = length(result_nam
 names(bootstrap_results_manual) <- result_names
 
 # run either of (1) or (2)
-# (1) without clusters - best
+# (1) without clusters - works
 system.time({
   bootstrap_results_boot <- boot(
     data = cohort,
@@ -1230,10 +1247,8 @@ system.time({
   )
 })
 
-# test <- bootstrap_results_manual %>% select(at.iptw.ipcw_nonlag.IRR_stab)
-# summary(test)
-
 # (2) with clusters - does NOT work on large cohort (>50,000 obs)
+# but faster than without clusters on smaller cohorts
 # num_cores <- 2
 # cluster <- makeCluster(num_cores)
 # 
@@ -1269,8 +1284,8 @@ system.time({
 
 bootstrap_results_manual <- bootstrap_results_manual[-1,]
 
-# test <- bootstrap_results_manual %>%
-#  select(itt.IRR, itt.iptw.IRR, at.IRR, at.iptw.IRR, at.iptw.ipcw_lag.IRR, at.iptw.ipcw_nonlag.IRR, at.iptw.ipcw_pool.IRR, at.iptw.ipcw_mod.IRR)
+test <- bootstrap_results_manual %>%
+ select(itt.IRR, itt.iptw.IRR, at.IRR, at.iptw.IRR, at.iptw.ipcw_lag.IRR, at.iptw.ipcw_nonlag.IRR, at.iptw.ipcw_pool.IRR, at.iptw.ipcw_mod.IRR)
 
 saveRDS(bootstrap_results_manual, file = paste(path_results, 'bootstrap_results_manual.rds', sep='/'))
 saveRDS(bootstrap_results_boot, file = paste(path_results, 'bootstrap_results_boot.rds', sep='/'))
